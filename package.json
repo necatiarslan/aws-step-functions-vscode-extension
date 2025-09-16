@@ -1,5 +1,5 @@
 {
-  "name": "aws-lambda-vscode-extension",
+  "name": "aws-step-functions-vscode-extension",
   "displayName": "Aws Step Functions",
   "description": "Update, Trigger & Monitor your Aws Step Functions",
   "version": "1.0.0",
@@ -24,273 +24,273 @@
   "contributes": {
     "commands": [
       {
-        "command": "LambdaTreeView.Refresh",
+        "command": "StepFuncTreeView.Refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "LambdaTreeView.Filter",
+        "command": "StepFuncTreeView.Filter",
         "title": "Filter",
         "icon": "$(filter)"
       },
       {
-        "command": "LambdaTreeView.ShowOnlyFavorite",
+        "command": "StepFuncTreeView.ShowOnlyFavorite",
         "title": "Show Only Favorite",
         "icon": "$(bookmark)"
       },
       {
-        "command": "LambdaTreeView.ShowHiddenNodes",
+        "command": "StepFuncTreeView.ShowHiddenNodes",
         "title": "Show Hidden Nodes",
         "icon": "$(eye-closed)"
       },
       {
-        "command": "LambdaTreeView.AddToFav",
+        "command": "StepFuncTreeView.AddToFav",
         "title": "Fav"
       },
       {
-        "command": "LambdaTreeView.DeleteFromFav",
+        "command": "StepFuncTreeView.DeleteFromFav",
         "title": "UnFav"
       },
       {
-        "command": "LambdaTreeView.HideNode",
+        "command": "StepFuncTreeView.HideNode",
         "title": "Hide"
       },
       {
-        "command": "LambdaTreeView.UnHideNode",
+        "command": "StepFuncTreeView.UnHideNode",
         "title": "UnHide"
       },
       {
-        "command": "LambdaTreeView.AddLambda",
-        "title": "Add Lambda",
+        "command": "StepFuncTreeView.AddStepFunc",
+        "title": "Add StepFunc",
         "icon": "$(add)"
       },
       {
-        "command": "LambdaTreeView.RemoveLambda",
-        "title": "Remove Lambda"
+        "command": "StepFuncTreeView.RemoveStepFunc",
+        "title": "Remove StepFunc"
       },
       {
-        "command": "LambdaTreeView.Goto",
+        "command": "StepFuncTreeView.Goto",
         "title": "Goto Aws Console"
       },
       {
-        "command": "LambdaTreeView.SelectAwsProfile",
+        "command": "StepFuncTreeView.SelectAwsProfile",
         "title": "Select Aws Profile",
         "icon": "$(account)"
       },
       {
-        "command": "LambdaTreeView.TriggerLambda",
+        "command": "StepFuncTreeView.TriggerStepFunc",
         "title": "Trigger",
         "icon": "$(run)"
       },
       {
-        "command": "LambdaTreeView.LambdaView",
-        "title": "Lambda View",
+        "command": "StepFuncTreeView.StepFuncView",
+        "title": "StepFunc View",
         "icon": "$(preview)"
       },
       {
-        "command": "LambdaTreeView.ViewLatestLog",
+        "command": "StepFuncTreeView.ViewLatestLog",
         "title": "Latest Logs",
         "icon": "$(output)"
       },
       {
-        "command": "LambdaTreeView.AddPayloadPath",
+        "command": "StepFuncTreeView.AddPayloadPath",
         "title": "Add Payload File",
         "icon": "$(add)"
       },
       {
-        "command": "LambdaTreeView.RemovePayloadPath",
+        "command": "StepFuncTreeView.RemovePayloadPath",
         "title": "Remove Paylod File",
         "icon": "$(trash)"
       },
       {
-        "command": "LambdaTreeView.RefreshLogs",
+        "command": "StepFuncTreeView.RefreshLogs",
         "title": "Refresh Logs",
         "icon": "$(refresh)"
       },
       {
-        "command": "LambdaTreeView.ViewLog",
+        "command": "StepFuncTreeView.ViewLog",
         "title": "View Log",
         "icon": "$(output)"
       },
       {
-        "command": "LambdaTreeView.ViewResponsePayload",
+        "command": "StepFuncTreeView.ViewResponsePayload",
         "title": "View Payload",
         "icon": "$(output)"
       },
       {
-        "command": "LambdaTreeView.SetCodePath",
+        "command": "StepFuncTreeView.SetCodePath",
         "title": "Set Code Path",
         "icon": "$(folder-library)"
       },
       {
-        "command": "LambdaTreeView.UpdateLambdaCodes",
-        "title": "Update Lambda Codes",
+        "command": "StepFuncTreeView.UpdateStepFuncCodes",
+        "title": "Update StepFunc Codes",
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "LambdaTreeView.UnsetCodePath",
+        "command": "StepFuncTreeView.UnsetCodePath",
         "title": "Unset Code Path",
         "icon": "$(trash)"
       },
       {
-        "command": "LambdaTreeView.PrintLambda",
-        "title": "Print Lambda",
+        "command": "StepFuncTreeView.PrintStepFunc",
+        "title": "Print StepFunc",
         "icon": "$(lightbulb)"
       },
       {
-        "command": "LambdaTreeView.TestAwsConnection",
+        "command": "StepFuncTreeView.TestAwsConnection",
         "title": "Test Aws Connection"
       },
       {
-        "command": "LambdaTreeView.UpdateAwsEndPoint",
+        "command": "StepFuncTreeView.UpdateAwsEndPoint",
         "title": "Update Aws EndPoint"
       },
       {
-        "command": "LambdaTreeView.Donate",
+        "command": "StepFuncTreeView.Donate",
         "title": "Donate"
       },
       {
-        "command": "LambdaTreeView.BugAndNewFeature",
+        "command": "StepFuncTreeView.BugAndNewFeature",
         "title": "Bug and New Feature"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "LambdaTreeView.ShowOnlyFavorite",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.ShowOnlyFavorite",
+          "when": "view == StepFuncTreeView",
           "group": "navigation@1"
         },
         {
-          "command": "LambdaTreeView.ShowHiddenNodes",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.ShowHiddenNodes",
+          "when": "view == StepFuncTreeView",
           "group": "navigation@2"
         },
         {
-          "command": "LambdaTreeView.Filter",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.Filter",
+          "when": "view == StepFuncTreeView",
           "group": "navigation@3"
         },
         {
-          "command": "LambdaTreeView.AddLambda",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.AddStepFunc",
+          "when": "view == StepFuncTreeView",
           "group": "navigation@4"
         },
         {
-          "command": "LambdaTreeView.SelectAwsProfile",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.SelectAwsProfile",
+          "when": "view == StepFuncTreeView",
           "group": "navigation@6"
         },
         {
-          "command": "LambdaTreeView.Refresh",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.Refresh",
+          "when": "view == StepFuncTreeView",
           "group": "navigation@7"
         },
         {
-          "command": "LambdaTreeView.TestAwsConnection",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.TestAwsConnection",
+          "when": "view == StepFuncTreeView",
           "group": "other"
         },
         {
-          "command": "LambdaTreeView.UpdateAwsEndPoint",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.UpdateAwsEndPoint",
+          "when": "view == StepFuncTreeView",
           "group": "other"
         },
         {
-          "command": "LambdaTreeView.Donate",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.Donate",
+          "when": "view == StepFuncTreeView",
           "group": "other"
         },
         {
-          "command": "LambdaTreeView.BugAndNewFeature",
-          "when": "view == LambdaTreeView",
+          "command": "StepFuncTreeView.BugAndNewFeature",
+          "when": "view == StepFuncTreeView",
           "group": "other"
         }
       ],
       "view/item/context": [
         {
-          "command": "LambdaTreeView.AddToFav",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "command": "StepFuncTreeView.AddToFav",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
           "group": "Filter"
         },
         {
-          "command": "LambdaTreeView.DeleteFromFav",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "command": "StepFuncTreeView.DeleteFromFav",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
           "group": "Filter"
         },
         {
-          "command": "LambdaTreeView.HideNode",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "command": "StepFuncTreeView.HideNode",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
           "group": "Filter"
         },
         {
-          "command": "LambdaTreeView.UnHideNode",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "command": "StepFuncTreeView.UnHideNode",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
           "group": "Filter"
         },
         {
-          "command": "LambdaTreeView.RemoveLambda",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
-          "group": "Lambda"
+          "command": "StepFuncTreeView.RemoveStepFunc",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
+          "group": "StepFunc"
         },
         {
-          "command": "LambdaTreeView.Goto",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
-          "group": "Lambda"
+          "command": "StepFuncTreeView.Goto",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
+          "group": "StepFunc"
         },
         {
-          "command": "LambdaTreeView.TriggerLambda",
-          "when": "view == LambdaTreeView && (viewItem == Lambda || viewItem == TriggerConfig || viewItem == TriggerSavedPayload || viewItem == TriggerWithPayload || viewItem == TriggerFilePayload || viewItem == TriggerNoPayload)",
+          "command": "StepFuncTreeView.TriggerStepFunc",
+          "when": "view == StepFuncTreeView && (viewItem == StepFunc || viewItem == TriggerConfig || viewItem == TriggerSavedPayload || viewItem == TriggerWithPayload || viewItem == TriggerFilePayload || viewItem == TriggerNoPayload)",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.ViewLatestLog",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "command": "StepFuncTreeView.ViewLatestLog",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.PrintLambda",
-          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "command": "StepFuncTreeView.PrintStepFunc",
+          "when": "view == StepFuncTreeView && viewItem == StepFunc",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.SetCodePath",
-          "when": "view == LambdaTreeView && (viewItem == Code || viewItem == CodePath)",
+          "command": "StepFuncTreeView.SetCodePath",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.UnsetCodePath",
-          "when": "view == LambdaTreeView && (viewItem == Code || viewItem == CodePath)",
+          "command": "StepFuncTreeView.UnsetCodePath",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.UpdateLambdaCodes",
-          "when": "view == LambdaTreeView && (viewItem == Code || viewItem == CodePath)",
+          "command": "StepFuncTreeView.UpdateStepFuncCodes",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.AddPayloadPath",
-          "when": "view == LambdaTreeView && viewItem == TriggerGroup",
+          "command": "StepFuncTreeView.AddPayloadPath",
+          "when": "view == StepFuncTreeView && viewItem == TriggerGroup",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.RemovePayloadPath",
-          "when": "view == LambdaTreeView && viewItem == TriggerFilePayload",
+          "command": "StepFuncTreeView.RemovePayloadPath",
+          "when": "view == StepFuncTreeView && viewItem == TriggerFilePayload",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.RefreshLogs",
-          "when": "view == LambdaTreeView && viewItem == LogGroup",
+          "command": "StepFuncTreeView.RefreshLogs",
+          "when": "view == StepFuncTreeView && viewItem == LogGroup",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.ViewLog",
-          "when": "view == LambdaTreeView && viewItem == LogStream",
+          "command": "StepFuncTreeView.ViewLog",
+          "when": "view == StepFuncTreeView && viewItem == LogStream",
           "group": "inline"
         },
         {
-          "command": "LambdaTreeView.ViewResponsePayload",
-          "when": "view == LambdaTreeView && viewItem == ResponsePayload",
+          "command": "StepFuncTreeView.ViewResponsePayload",
+          "when": "view == StepFuncTreeView && viewItem == ResponsePayload",
           "group": "inline"
         }
       ]
@@ -298,16 +298,16 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "aws-lambda-vscode-extension",
-          "title": "Aws Lambda",
+          "id": "aws-step-functions-vscode-extension",
+          "title": "Aws Step Functions",
           "icon": "media/aws-step-functions-logo-activitybar.png"
         }
       ]
     },
     "views": {
-      "aws-lambda-vscode-extension": [
+      "aws-step-functions-vscode-extension": [
         {
-          "id": "LambdaTreeView",
+          "id": "StepFuncTreeView",
           "name": "Aws Step Functions",
           "icon": "media/aws-step-functions-logo-activitybar.png"
         }
@@ -315,8 +315,8 @@
     },
     "viewsWelcome": [
       {
-        "view": "LambdaTreeView",
-        "contents": "Please click [+] to add your lambda Functions. \n [Add Lambda](command:LambdaTreeView.AddLambda) \n Leave lambda name empty to get all your buckets. You can enter lambda name partially. \n If you can not connect after a while check your Aws Credentials, Network and Proxy settings. \n\n\n\n To Access Aws, you need to configure aws credentials. \n For more detail on Aws Credentials [Click Here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) \n For a Youtube Tutorial [Click Here](https://www.youtube.com/watch?v=SON8sY1iOBU) \n [Update Aws EndPoint](command:LambdaTreeView.UpdateAwsEndPoint)"
+        "view": "StepFuncTreeView",
+        "contents": "Please click [+] to add your Step Functions. \n [Add StepFunc](command:StepFuncTreeView.AddStepFunc) \n Leave Step Function name empty to get all your Step Functions. You can enter Step Function name partially. \n If you can not connect after a while check your Aws Credentials, Network and Proxy settings. \n\n\n\n To Access Aws, you need to configure aws credentials. \n For more detail on Aws Credentials [Click Here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) \n For a Youtube Tutorial [Click Here](https://www.youtube.com/watch?v=SON8sY1iOBU) \n [Update Aws EndPoint](command:StepFuncTreeView.UpdateAwsEndPoint)"
       }
     ]
   },

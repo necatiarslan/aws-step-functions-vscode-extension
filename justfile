@@ -28,15 +28,15 @@ npm-install:
     npm install
     npx tsc --noEmit
 
-list-lambda:
-    aws --endpoint-url=http://localhost:4566 lambda list-functions
+list-step-functions:
+    aws --endpoint-url=http://localhost:4566 stepfunctions list-state-machines
 
-add-lambda:
-    cd test/ && zip my_lambda.zip my_lambda.py && cd ../..
+add-step-function:
+    aws --endpoint-url=http://localhost:4566 stepfunctions create-state-machine \
+    --name my_step_function \
+    --definition file://test/my_step_function.json \
+    --role-arn arn:aws:iam::000000000000:role/DummyRole
 
-    aws --endpoint-url=http://localhost:4566 lambda create-function \
-    --function-name my-lambda \
-    --runtime python3.9 \
-    --zip-file fileb://test/my_lambda.zip \
-    --handler my_lambda.handler \
-    --role arn:aws:iam::000000000000:role/lambda-role
+trigger-step-function:
+    aws --endpoint-url=http://localhost:4566 stepfunctions start-execution \
+    --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:my_step_function

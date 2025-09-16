@@ -21,10 +21,10 @@ export function getUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathLi
   return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
 }
 
-export function showOutputMessage(message: any, popupMessage: string = "Results are printed to OUTPUT / AwsLambda-Log", clearPrevMessages:boolean=true): void {
+export function showOutputMessage(message: any, popupMessage: string = "Results are printed to OUTPUT / AwsStepFunc-Log", clearPrevMessages:boolean=true): void {
 
   if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel("AwsLambda-Log");
+    outputChannel = vscode.window.createOutputChannel("AwsStepFunc-Log");
   }
 
   if(clearPrevMessages)
@@ -50,7 +50,7 @@ export function logToOutput(message: any, error?: Error, focus?:boolean): void {
   let now = new Date().toLocaleString();
 
   if (!logsOutputChannel) {
-    logsOutputChannel = vscode.window.createOutputChannel("AwsLambda-Log");
+    logsOutputChannel = vscode.window.createOutputChannel("AwsStepFunc-Log");
   }
 
   if (typeof message === "object") {

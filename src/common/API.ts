@@ -11,7 +11,7 @@ import { sep } from "path";
 import { join, basename, extname, dirname } from "path";
 import { parseKnownFiles, SourceProfileInit } from "../aws-sdk/parseKnownFiles";
 import { ParsedIniData } from "@aws-sdk/types";
-import * as LambdaTreeView from '../lambda/LambdaTreeView';
+import * as LambdaTreeView from '../step/StepFuncTreeView';
 import * as fs from 'fs';
 import * as archiver from 'archiver';
 
@@ -19,8 +19,8 @@ export async function GetCredentials() {
   let credentials;
 
   try {
-    if (LambdaTreeView.LambdaTreeView.Current) {
-      process.env.AWS_PROFILE = LambdaTreeView.LambdaTreeView.Current.AwsProfile ;
+    if (LambdaTreeView.StepFuncTreeView.Current) {
+      process.env.AWS_PROFILE = LambdaTreeView.StepFuncTreeView.Current.AwsProfile ;
     }
     // Get credentials using the default provider chain.
     const provider = fromNodeProviderChain({ignoreCache: true});
@@ -45,7 +45,7 @@ async function GetLambdaClient(region: string) {
   const lambdaClient = new LambdaClient({
     region,
     credentials,
-    endpoint: LambdaTreeView.LambdaTreeView.Current?.AwsEndPoint,
+    endpoint: LambdaTreeView.StepFuncTreeView.Current?.AwsEndPoint,
   });
   
   return lambdaClient;
@@ -56,7 +56,7 @@ async function GetCloudWatchClient(region: string) {
   const cloudwatchLogsClient = new CloudWatchLogsClient({
     region,
     credentials,
-    endpoint: LambdaTreeView.LambdaTreeView.Current?.AwsEndPoint,
+    endpoint: LambdaTreeView.StepFuncTreeView.Current?.AwsEndPoint,
   });
   
   return cloudwatchLogsClient;
@@ -68,7 +68,7 @@ async function GetIAMClient() {
   return iamClient;
 }
 
-export async function GetLambdaList(
+export async function GetStepFuncList(
   region: string,
   LambdaName?: string
 ): Promise<MethodResult<string[]>> {
@@ -143,7 +143,7 @@ export function ParseJson(jsonString: string) {
   return JSON.parse(jsonString);
 }
 
-export async function TriggerLambda(
+export async function TriggerStepFunc(
   Region: string,
   LambdaName: string,
   Parameters: { [key: string]: any }
@@ -182,7 +182,7 @@ import {
   GetLogEventsCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
 
-export async function GetLatestLambdaLogStreamName(
+export async function GetLatestStepFuncLogStreamName(
   Region: string,
   Lambda: string
 ): Promise<MethodResult<string>> {
@@ -191,7 +191,7 @@ export async function GetLatestLambdaLogStreamName(
 
   try {
     // Get the log group name
-    const logGroupName = GetLambdaLogGroupName(Lambda);
+    const logGroupName = GetStepFuncLogGroupName(Lambda);
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -234,7 +234,7 @@ export async function GetLatestLambdaLogStreamName(
   }
 }
 
-export function GetLambdaLogGroupName(Lambda: string) {
+export function GetStepFuncLogGroupName(Lambda: string) {
   return `/aws/lambda/${Lambda}`;
 }
 
@@ -247,7 +247,7 @@ export async function GetLatestLambdaLogs(
 
   try {
     // Get the log group name
-    const logGroupName = GetLambdaLogGroupName(Lambda);
+    const logGroupName = GetStepFuncLogGroupName(Lambda);
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -312,7 +312,7 @@ export async function GetLatestLambdaLogs(
   }
 }
 
-export async function GetLatestLambdaLogStreams(
+export async function GetLatestStepFuncLogStreams(
   Region: string,
   Lambda: string
 ): Promise<MethodResult<string[]>> {
@@ -322,7 +322,7 @@ export async function GetLatestLambdaLogStreams(
 
   try {
     // Get the log group name
-    const logGroupName = GetLambdaLogGroupName(Lambda);
+    const logGroupName = GetStepFuncLogGroupName(Lambda);
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -361,7 +361,7 @@ export async function GetLambdaLogs(
 
   try {
     // Get the log group name
-    const logGroupName = GetLambdaLogGroupName(Lambda);
+    const logGroupName = GetStepFuncLogGroupName(Lambda);
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     const getLogEventsCommand = new GetLogEventsCommand({
@@ -443,7 +443,7 @@ import {
   GetFunctionCommandOutput,
 } from "@aws-sdk/client-lambda";
 
-export async function GetLambda(
+export async function GetStepFunc(
   Region: string,
   LambdaName: string
 ): Promise<MethodResult<GetFunctionCommandOutput>> {
@@ -502,7 +502,7 @@ import {
   UpdateFunctionCodeCommandOutput,
 } from "@aws-sdk/client-lambda";
 
-export async function UpdateLambdaCode(
+export async function UpdateStepFuncCode(
   Region: string,
   LambdaName: string,
   CodeFilePath: string
@@ -597,7 +597,7 @@ async function GetSTSClient(region: string) {
     {
       region,
       credentials,
-      endpoint: LambdaTreeView.LambdaTreeView.Current?.AwsEndPoint,
+      endpoint: LambdaTreeView.StepFuncTreeView.Current?.AwsEndPoint,
     }
   );
   return iamClient;

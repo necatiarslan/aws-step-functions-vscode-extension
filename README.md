@@ -1,14 +1,14 @@
-# Aws Lambda Extension for VSCode
+# Aws Step Functions Extension for VSCode
 ![screenshoot](media/ext-main.png)
 
-🚀 **AWS Lambda Extension for VSCode** allows you to interact with your AWS Lambda functions directly within VSCode. This extension streamlines the development, testing, and debugging of Lambda functions, providing an intuitive interface for triggering functions, viewing logs, and managing payloads—all within your favorite code editor.  
+🚀 **AWS Step Functions Extension for VSCode** allows you to interact with your AWS Step Functions directly within VSCode. This extension streamlines the development, testing, and debugging of Step Functions, providing an intuitive interface for triggering functions, viewing logs, and managing payloads—all within your favorite code editor.  
 
 ## ✨ Features  
 
-- **Trigger Lambda Functions**: Run your AWS Lambda functions with or without payloads.  
+- **Trigger Step Functions**: Run your AWS Step Functions with or without payloads.  
 - **Manage Payloads**: Save and reuse JSON payloads for testing.  
-- **View CloudWatch Logs**: Instantly access logs related to your Lambda executions. 
-- **Upload Code**: Upload and update your Lambda functions with ease.
+- **View CloudWatch Logs**: Instantly access logs related to your Step Functions executions. 
+- **Upload Code**: Upload and update your Step Functions with ease.
 - **Export Logs**: Save logs for later analysis.  
 - **Filter and Search Logs**: Easily navigate through logs using built-in search and filter options.  
 - **AWS Profile Support**: Work with multiple AWS profiles seamlessly.  
@@ -54,26 +54,11 @@ Extension supports all types of credentials. It searches for aws credentials in 
 
 ## Bug Report
 To report your bugs or request new features, use link below\
-https://github.com/necatiarslan/aws-lambda-vscode-extension/issues/new
+https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 
 
 ## Todo
-- Env Variable Node, Set Env Variable
-- Share active profile with other extensions
-- Stick to workspace and profile 
-- Tags Node
-- Info Node
-  - Description
-  - Runtime
-  - FunctionArn
-  - MemorySize
-  - Timeout
-  - State
-  - LastModified
-  - LastUpdateStatus
-  - LogFormat
-  - LogGroup
-  - Version
+- 
 
 ## Nice To Have
 - 
@@ -84,10 +69,3 @@ https://www.linkedin.com/in/necati-arslan/
 Thanks, \
 Necati ARSLAN \
 necatia@gmail.com
-
-
-Other Extensions
-- https://bit.ly/aws-access-vscode-extension
-- https://bit.ly/vscode-aws-lambda
-- https://bit.ly/aws-cloudwatch-vscode-extension
-- https://bit.ly/airflow-vscode-extension

@@ -57,7 +57,7 @@ class LambdaTreeView {
         }
     }
     BugAndNewFeature() {
-        vscode.env.openExternal(vscode.Uri.parse('https://github.com/necatiarslan/aws-lambda-vscode-extension/issues/new'));
+        vscode.env.openExternal(vscode.Uri.parse('https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new'));
     }
     Donate() {
         vscode.env.openExternal(vscode.Uri.parse('https://github.com/sponsors/necatiarslan'));

@@ -1,128 +1,128 @@
 import * as vscode from 'vscode';
 import * as ui from './common/UI';
-import { LambdaTreeView } from './lambda/LambdaTreeView';
-import { LambdaTreeItem } from './lambda/LambdaTreeItem';
+import { StepFuncTreeView } from './step/StepFuncTreeView';
+import { StepFuncTreeItem } from './step/StepFuncTreeItem';
 
 export function activate(context: vscode.ExtensionContext) {
-	ui.logToOutput('Aws Lambda Extension activation started');
+	ui.logToOutput('Aws StepFunc Extension activation started');
 
-	let treeView:LambdaTreeView = new LambdaTreeView(context);
+	let treeView:StepFuncTreeView = new StepFuncTreeView(context);
 
-	vscode.commands.registerCommand('LambdaTreeView.Refresh', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.Refresh', () => {
 		treeView.Refresh();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.Filter', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.Filter', () => {
 		treeView.Filter();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.ShowOnlyFavorite', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.ShowOnlyFavorite', () => {
 		treeView.ShowOnlyFavorite();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.ShowHiddenNodes', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.ShowHiddenNodes', () => {
 		treeView.ShowHiddenNodes();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.AddToFav', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.AddToFav', (node: StepFuncTreeItem) => {
 		treeView.AddToFav(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.DeleteFromFav', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.DeleteFromFav', (node: StepFuncTreeItem) => {
 		treeView.DeleteFromFav(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.HideNode', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.HideNode', (node: StepFuncTreeItem) => {
 		treeView.HideNode(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.UnHideNode', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.UnHideNode', (node: StepFuncTreeItem) => {
 		treeView.UnHideNode(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.AddLambda', () => {
-		treeView.AddLambda();
+	vscode.commands.registerCommand('StepFuncTreeView.AddStepFunc', () => {
+		treeView.AddStepFunc();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.RemoveLambda', (node: LambdaTreeItem) => {
-		treeView.RemoveLambda(node);
+	vscode.commands.registerCommand('StepFuncTreeView.RemoveStepFunc', (node: StepFuncTreeItem) => {
+		treeView.RemoveStepFunc(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.Goto', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.Goto', (node: StepFuncTreeItem) => {
 		treeView.Goto(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.SelectAwsProfile', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.SelectAwsProfile', (node: StepFuncTreeItem) => {
 		treeView.SelectAwsProfile(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.TestAwsConnection', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.TestAwsConnection', () => {
 		treeView.TestAwsConnection();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.UpdateAwsEndPoint', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.UpdateAwsEndPoint', () => {
 		treeView.UpdateAwsEndPoint();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.Donate', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.Donate', () => {
 		treeView.Donate();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.BugAndNewFeature', () => {
+	vscode.commands.registerCommand('StepFuncTreeView.BugAndNewFeature', () => {
 		treeView.BugAndNewFeature();
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.TriggerLambda', (node: LambdaTreeItem) => {
-		treeView.TriggerLambda(node);
+	vscode.commands.registerCommand('StepFuncTreeView.TriggerStepFunc', (node: StepFuncTreeItem) => {
+		treeView.TriggerStepFunc(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.ViewLatestLog', (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.ViewLatestLog', (node: StepFuncTreeItem) => {
 		treeView.ViewLatestLog(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.LambdaView', (node: LambdaTreeItem) => {
-		treeView.LambdaView(node);
+	vscode.commands.registerCommand('StepFuncTreeView.StepFuncView', (node: StepFuncTreeItem) => {
+		treeView.StepFuncView(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.PrintLambda', async (node: LambdaTreeItem) => {
-		await treeView.PrintLambda(node);
+	vscode.commands.registerCommand('StepFuncTreeView.PrintStepFunc', async (node: StepFuncTreeItem) => {
+		await treeView.PrintStepFunc(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.UpdateLambdaCodes', async (node: LambdaTreeItem) => {
-		await treeView.UpdateLambdaCodes(node);
+	vscode.commands.registerCommand('StepFuncTreeView.UpdateStepFuncCodes', async (node: StepFuncTreeItem) => {
+		await treeView.UpdateStepFuncCodes(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.SetCodePath', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.SetCodePath', async (node: StepFuncTreeItem) => {
 		await treeView.SetCodePath(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.UnsetCodePath', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.UnsetCodePath', async (node: StepFuncTreeItem) => {
 		await treeView.UnsetCodePath(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.ViewLog', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.ViewLog', async (node: StepFuncTreeItem) => {
 		await treeView.ViewLog(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.ViewResponsePayload', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.ViewResponsePayload', async (node: StepFuncTreeItem) => {
 		await treeView.ViewResponsePayload(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.RefreshLogs', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.RefreshLogs', async (node: StepFuncTreeItem) => {
 		await treeView.RefreshLogStreams(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.RemovePayloadPath', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.RemovePayloadPath', async (node: StepFuncTreeItem) => {
 		await treeView.RemovePayloadPath(node);
 	});
 
-	vscode.commands.registerCommand('LambdaTreeView.AddPayloadPath', async (node: LambdaTreeItem) => {
+	vscode.commands.registerCommand('StepFuncTreeView.AddPayloadPath', async (node: StepFuncTreeItem) => {
 		await treeView.AddPayloadPath(node);
 	});
 
-	ui.logToOutput('Aws Lambda Extension activation completed');
+	ui.logToOutput('Aws StepFunc Extension activation completed');
 }
 
 export function deactivate() {
-	ui.logToOutput('Aws Lambda is now de-active!');
+	ui.logToOutput('Aws StepFunc is now de-active!');
 }
