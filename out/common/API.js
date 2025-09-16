@@ -8,12 +8,11 @@ exports.ParseJson = ParseJson;
 exports.TriggerStepFunc = TriggerStepFunc;
 exports.GetLatestStepFuncLogStreamName = GetLatestStepFuncLogStreamName;
 exports.GetStepFuncLogGroupName = GetStepFuncLogGroupName;
-exports.GetLatestLambdaLogs = GetLatestLambdaLogs;
+exports.GetLatestStepFuncLogs = GetLatestStepFuncLogs;
 exports.GetLatestStepFuncLogStreams = GetLatestStepFuncLogStreams;
-exports.GetLambdaLogs = GetLambdaLogs;
+exports.GetStepFuncLogs = GetStepFuncLogs;
 exports.GetLogEvents = GetLogEvents;
 exports.GetStepFunc = GetStepFunc;
-exports.GetLambdaConfiguration = GetLambdaConfiguration;
 exports.UpdateStepFuncCode = UpdateStepFuncCode;
 exports.ZipTextFile = ZipTextFile;
 exports.TestAwsCredentials = TestAwsCredentials;
@@ -22,7 +21,7 @@ exports.GetAwsProfileList = GetAwsProfileList;
 exports.getIniProfileData = getIniProfileData;
 /* eslint-disable @typescript-eslint/naming-convention */
 const credential_providers_1 = require("@aws-sdk/credential-providers");
-const client_lambda_1 = require("@aws-sdk/client-lambda");
+const client_sfn_1 = require("@aws-sdk/client-sfn");
 const client_cloudwatch_logs_1 = require("@aws-sdk/client-cloudwatch-logs");
 const client_iam_1 = require("@aws-sdk/client-iam");
 const ui = require("./UI");
@@ -31,14 +30,14 @@ const os_1 = require("os");
 const path_1 = require("path");
 const path_2 = require("path");
 const parseKnownFiles_1 = require("../aws-sdk/parseKnownFiles");
-const LambdaTreeView = require("../step/StepFuncTreeView");
+const StepFuncTreeView = require("../step/StepFuncTreeView");
 const fs = require("fs");
 const archiver = require("archiver");
 async function GetCredentials() {
     let credentials;
     try {
-        if (LambdaTreeView.StepFuncTreeView.Current) {
-            process.env.AWS_PROFILE = LambdaTreeView.StepFuncTreeView.Current.AwsProfile;
+        if (StepFuncTreeView.StepFuncTreeView.Current) {
+            process.env.AWS_PROFILE = StepFuncTreeView.StepFuncTreeView.Current.AwsProfile;
         }
         // Get credentials using the default provider chain.
         const provider = (0, credential_providers_1.fromNodeProviderChain)({ ignoreCache: true });
@@ -55,21 +54,21 @@ async function GetCredentials() {
         return credentials;
     }
 }
-async function GetLambdaClient(region) {
+async function GetStepFuncClient(region) {
     const credentials = await GetCredentials();
-    const lambdaClient = new client_lambda_1.LambdaClient({
+    const stepFuncClient = new client_sfn_1.SFNClient({
         region,
         credentials,
-        endpoint: LambdaTreeView.StepFuncTreeView.Current?.AwsEndPoint,
+        endpoint: StepFuncTreeView.StepFuncTreeView.Current?.AwsEndPoint,
     });
-    return lambdaClient;
+    return stepFuncClient;
 }
 async function GetCloudWatchClient(region) {
     const credentials = await GetCredentials();
     const cloudwatchLogsClient = new client_cloudwatch_logs_1.CloudWatchLogsClient({
         region,
         credentials,
-        endpoint: LambdaTreeView.StepFuncTreeView.Current?.AwsEndPoint,
+        endpoint: StepFuncTreeView.StepFuncTreeView.Current?.AwsEndPoint,
     });
     return cloudwatchLogsClient;
 }
@@ -78,51 +77,36 @@ async function GetIAMClient() {
     const iamClient = new client_iam_1.IAMClient({ credentials });
     return iamClient;
 }
-async function GetStepFuncList(region, LambdaName) {
+async function GetStepFuncList(region, StepFuncName) {
     let result = new MethodResult_1.MethodResult();
     result.result = [];
     try {
-        // Get the Lambda client (v3 client)
-        const lambda = await GetLambdaClient(region);
-        let allFunctions = [];
-        let marker = undefined;
-        // Continue fetching pages until no NextMarker is returned
+        const sfn = await GetStepFuncClient(region);
+        let nextToken = undefined;
         do {
-            const command = new client_lambda_1.ListFunctionsCommand({ Marker: marker });
-            const functionsList = await lambda.send(command);
-            if (functionsList.Functions) {
-                allFunctions.push(...functionsList.Functions);
+            const cmd = new client_sfn_1.ListStateMachinesCommand({ maxResults: 100, nextToken });
+            const res = await sfn.send(cmd);
+            if (res.stateMachines) {
+                for (const sm of res.stateMachines) {
+                    const name = sm.name ?? sm.stateMachineArn ?? "";
+                    if (!StepFuncName || name.includes(StepFuncName)) {
+                        result.result.push(name);
+                    }
+                }
             }
-            // Update marker to the next page (if present)
-            marker = functionsList.NextMarker;
-        } while (marker);
-        // Filter functions if a LambdaName filter is provided
-        let matchingFunctions;
-        if (LambdaName) {
-            matchingFunctions = allFunctions.filter((func) => func.FunctionName?.includes(LambdaName) || LambdaName.length === 0);
-        }
-        else {
-            matchingFunctions = allFunctions;
-        }
-        // Extract the function names into the result
-        if (matchingFunctions && matchingFunctions.length > 0) {
-            matchingFunctions.forEach((func) => {
-                if (func.FunctionName)
-                    result.result.push(func.FunctionName);
-            });
-        }
+            nextToken = res.nextToken;
+        } while (nextToken);
         result.isSuccessful = true;
         return result;
     }
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLambdaList Error !!!", error);
-        ui.logToOutput("api.GetLambdaList Error !!!", error);
+        ui.showErrorMessage("api.GetStepFuncList Error !!!", error);
+        ui.logToOutput("api.GetStepFuncList Error !!!", error);
         return result;
     }
 }
-const client_lambda_2 = require("@aws-sdk/client-lambda");
 function isJsonString(jsonString) {
     try {
         var json = ParseJson(jsonString);
@@ -135,38 +119,39 @@ function isJsonString(jsonString) {
 function ParseJson(jsonString) {
     return JSON.parse(jsonString);
 }
-async function TriggerStepFunc(Region, LambdaName, Parameters) {
+async function TriggerStepFunc(Region, StepFuncName, Parameters) {
     let result = new MethodResult_1.MethodResult();
     try {
-        const lambda = await GetLambdaClient(Region);
-        // Specify the parameters for invoking the Lambda function
-        const param = {
-            FunctionName: LambdaName,
-            // Explicitly cast the literal so that its type is the exact union type expected
-            InvocationType: "RequestResponse",
-            Payload: JSON.stringify(Parameters),
-        };
-        const command = new client_lambda_2.InvokeCommand(param);
-        const response = await lambda.send(command);
-        result.result = response;
+        // Start Step Functions execution
+        const sfn = await GetStepFuncClient(Region);
+        const input = JSON.stringify(Parameters ?? {});
+        const startCmd = new client_sfn_1.StartExecutionCommand({
+            stateMachineArn: StepFuncName, // StepFuncName should be ARN or name resolved by caller
+            input,
+        });
+        const startRes = await sfn.send(startCmd);
+        // Wrap response into MethodResult; keep existing InvokeCommandOutput shape not applicable
+        // Return a lightweight object with executionArn in result.result (caller must adapt)
+        const fakeResponse = { $metadata: startRes.$metadata, Payload: Buffer.from(JSON.stringify({ executionArn: startRes.executionArn })) };
+        result.result = fakeResponse;
         result.isSuccessful = true;
         return result;
     }
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.TriggerLambda Error !!!", error);
-        ui.logToOutput("api.TriggerLambda Error !!!", error);
+        ui.showErrorMessage("api.TriggerStepFunc Error !!!", error);
+        ui.logToOutput("api.TriggerStepFunc Error !!!", error);
         return result;
     }
 }
 const client_cloudwatch_logs_2 = require("@aws-sdk/client-cloudwatch-logs");
-async function GetLatestStepFuncLogStreamName(Region, Lambda) {
-    ui.logToOutput("GetLatestLambdaLogStreamName for Lambda function: " + Lambda);
+async function GetLatestStepFuncLogStreamName(Region, StepFunc) {
+    ui.logToOutput("GetLatestStepFuncLogStreamName for StepFunc function: " + StepFunc);
     let result = new MethodResult_1.MethodResult();
     try {
         // Get the log group name
-        const logGroupName = GetStepFuncLogGroupName(Lambda);
+        const logGroupName = GetStepFuncLogGroupName(StepFunc);
         const cloudwatchlogs = await GetCloudWatchClient(Region);
         // Get the streams sorted by the latest event time
         const describeLogStreamsCommand = new client_cloudwatch_logs_2.DescribeLogStreamsCommand({
@@ -178,18 +163,18 @@ async function GetLatestStepFuncLogStreamName(Region, Lambda) {
         const streamsResponse = await cloudwatchlogs.send(describeLogStreamsCommand);
         if (!streamsResponse.logStreams || streamsResponse.logStreams.length === 0) {
             result.isSuccessful = false;
-            result.error = new Error("No log streams found for this Lambda function.");
-            ui.showErrorMessage("No log streams found for this Lambda function.", result.error);
-            ui.logToOutput("No log streams found for this Lambda function.");
+            result.error = new Error("No log streams found for this StepFunc function.");
+            ui.showErrorMessage("No log streams found for this StepFunc function.", result.error);
+            ui.logToOutput("No log streams found for this StepFunc function.");
             return result;
         }
         // Get the latest log events from the first stream
         const logStreamName = streamsResponse.logStreams[0].logStreamName;
         if (!logStreamName) {
             result.isSuccessful = false;
-            result.error = new Error("No log stream name found for this Lambda function.");
-            ui.showErrorMessage("No log stream name found for this Lambda function.", result.error);
-            ui.logToOutput("No log stream name found for this Lambda function.");
+            result.error = new Error("No log stream name found for this StepFunc function.");
+            ui.showErrorMessage("No log stream name found for this StepFunc function.", result.error);
+            ui.logToOutput("No log stream name found for this StepFunc function.");
             return result;
         }
         result.result = logStreamName;
@@ -199,20 +184,20 @@ async function GetLatestStepFuncLogStreamName(Region, Lambda) {
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLatestLambdaLogStreamName Error !!!", error);
-        ui.logToOutput("api.GetLatestLambdaLogStreamName Error !!!", error);
+        ui.showErrorMessage("api.GetLatestStepFuncLogStreamName Error !!!", error);
+        ui.logToOutput("api.GetLatestStepFuncLogStreamName Error !!!", error);
         return result;
     }
 }
-function GetStepFuncLogGroupName(Lambda) {
-    return `/aws/lambda/${Lambda}`;
+function GetStepFuncLogGroupName(StepFunc) {
+    return `/aws/stepFunc/${StepFunc}`;
 }
-async function GetLatestLambdaLogs(Region, Lambda) {
-    ui.logToOutput("Getting logs for Lambda function: " + Lambda);
+async function GetLatestStepFuncLogs(Region, StepFunc) {
+    ui.logToOutput("Getting logs for StepFunc function: " + StepFunc);
     let result = new MethodResult_1.MethodResult();
     try {
         // Get the log group name
-        const logGroupName = GetStepFuncLogGroupName(Lambda);
+        const logGroupName = GetStepFuncLogGroupName(StepFunc);
         const cloudwatchlogs = await GetCloudWatchClient(Region);
         // Get the streams sorted by the latest event time
         const describeLogStreamsCommand = new client_cloudwatch_logs_2.DescribeLogStreamsCommand({
@@ -224,18 +209,18 @@ async function GetLatestLambdaLogs(Region, Lambda) {
         const streamsResponse = await cloudwatchlogs.send(describeLogStreamsCommand);
         if (!streamsResponse.logStreams || streamsResponse.logStreams.length === 0) {
             result.isSuccessful = false;
-            result.error = new Error("No log streams found for this Lambda function.");
-            ui.showErrorMessage("No log streams found for this Lambda function.", result.error);
-            ui.logToOutput("No log streams found for this Lambda function.");
+            result.error = new Error("No log streams found for this StepFunc function.");
+            ui.showErrorMessage("No log streams found for this StepFunc function.", result.error);
+            ui.logToOutput("No log streams found for this StepFunc function.");
             return result;
         }
         // Get the latest log events from the first stream
         const logStreamName = streamsResponse.logStreams[0].logStreamName;
         if (!logStreamName) {
             result.isSuccessful = false;
-            result.error = new Error("No log stream name found for this Lambda function.");
-            ui.showErrorMessage("No log stream name found for this Lambda function.", result.error);
-            ui.logToOutput("No log stream name found for this Lambda function.");
+            result.error = new Error("No log stream name found for this StepFunc function.");
+            ui.showErrorMessage("No log stream name found for this StepFunc function.", result.error);
+            ui.logToOutput("No log stream name found for this StepFunc function.");
             return result;
         }
         const getLogEventsCommand = new client_cloudwatch_logs_2.GetLogEventsCommand({
@@ -247,9 +232,9 @@ async function GetLatestLambdaLogs(Region, Lambda) {
         const eventsResponse = await cloudwatchlogs.send(getLogEventsCommand);
         if (!eventsResponse.events || eventsResponse.events.length === 0) {
             result.isSuccessful = false;
-            result.error = new Error("No log events found for this Lambda function.");
-            ui.showErrorMessage("No log events found for this Lambda function.", result.error);
-            ui.logToOutput("No log events found for this Lambda function.");
+            result.error = new Error("No log events found for this StepFunc function.");
+            ui.showErrorMessage("No log events found for this StepFunc function.", result.error);
+            ui.logToOutput("No log events found for this StepFunc function.");
             return result;
         }
         // Concatenate log messages
@@ -263,18 +248,18 @@ async function GetLatestLambdaLogs(Region, Lambda) {
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLatestLambdaLogs Error !!!", error);
-        ui.logToOutput("api.GetLatestLambdaLogs Error !!!", error);
+        ui.showErrorMessage("api.GetLatestStepFuncLogs Error !!!", error);
+        ui.logToOutput("api.GetLatestStepFuncLogs Error !!!", error);
         return result;
     }
 }
-async function GetLatestStepFuncLogStreams(Region, Lambda) {
-    ui.logToOutput("Getting log streams for Lambda function: " + Lambda);
+async function GetLatestStepFuncLogStreams(Region, StepFunc) {
+    ui.logToOutput("Getting log streams for StepFunc function: " + StepFunc);
     let result = new MethodResult_1.MethodResult();
     result.result = [];
     try {
         // Get the log group name
-        const logGroupName = GetStepFuncLogGroupName(Lambda);
+        const logGroupName = GetStepFuncLogGroupName(StepFunc);
         const cloudwatchlogs = await GetCloudWatchClient(Region);
         // Get the streams sorted by the latest event time
         const describeLogStreamsCommand = new client_cloudwatch_logs_2.DescribeLogStreamsCommand({
@@ -294,17 +279,17 @@ async function GetLatestStepFuncLogStreams(Region, Lambda) {
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLatestLambdaLogStreams Error !!!", error);
-        ui.logToOutput("api.GetLatestLambdaLogStreams Error !!!", error);
+        ui.showErrorMessage("api.GetLatestStepFuncLogStreams Error !!!", error);
+        ui.logToOutput("api.GetLatestStepFuncLogStreams Error !!!", error);
         return result;
     }
 }
-async function GetLambdaLogs(Region, Lambda, LogStreamName) {
-    ui.logToOutput("Getting logs for Lambda function: " + Lambda + " LogStream " + LogStreamName);
+async function GetStepFuncLogs(Region, StepFunc, LogStreamName) {
+    ui.logToOutput("Getting logs for StepFunc function: " + StepFunc + " LogStream " + LogStreamName);
     let result = new MethodResult_1.MethodResult();
     try {
         // Get the log group name
-        const logGroupName = GetStepFuncLogGroupName(Lambda);
+        const logGroupName = GetStepFuncLogGroupName(StepFunc);
         const cloudwatchlogs = await GetCloudWatchClient(Region);
         const getLogEventsCommand = new client_cloudwatch_logs_2.GetLogEventsCommand({
             logGroupName: logGroupName,
@@ -315,9 +300,9 @@ async function GetLambdaLogs(Region, Lambda, LogStreamName) {
         const eventsResponse = await cloudwatchlogs.send(getLogEventsCommand);
         if (!eventsResponse.events || eventsResponse.events.length === 0) {
             result.isSuccessful = false;
-            result.error = new Error("No log events found for this Lambda function." + Lambda + " LogStream " + LogStreamName);
-            ui.showErrorMessage("No log events found for this Lambda function." + Lambda + " LogStream " + LogStreamName, result.error);
-            ui.logToOutput("No log events found for this Lambda function." + Lambda + " LogStream " + LogStreamName);
+            result.error = new Error("No log events found for this StepFunc function." + StepFunc + " LogStream " + LogStreamName);
+            ui.showErrorMessage("No log events found for this StepFunc function." + StepFunc + " LogStream " + LogStreamName, result.error);
+            ui.logToOutput("No log events found for this StepFunc function." + StepFunc + " LogStream " + LogStreamName);
             return result;
         }
         // Concatenate log messages
@@ -331,8 +316,8 @@ async function GetLambdaLogs(Region, Lambda, LogStreamName) {
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLatestLambdaLogs Error !!!", error);
-        ui.logToOutput("api.GetLatestLambdaLogs Error !!!", error);
+        ui.showErrorMessage("api.GetLatestStepFuncLogs Error !!!", error);
+        ui.logToOutput("api.GetLatestStepFuncLogs Error !!!", error);
         return result;
     }
 }
@@ -367,15 +352,14 @@ async function GetLogEvents(Region, LogGroupName, LogStreamName) {
         return result;
     }
 }
-const client_lambda_3 = require("@aws-sdk/client-lambda");
-async function GetStepFunc(Region, LambdaName) {
+async function GetStepFunc(Region, StepFuncName) {
     let result = new MethodResult_1.MethodResult();
     try {
-        const lambda = await GetLambdaClient(Region);
-        const command = new client_lambda_3.GetFunctionCommand({
-            FunctionName: LambdaName,
+        const stepFunc = await GetStepFuncClient(Region);
+        const command = new client_sfn_1.DescribeStateMachineCommand({
+            stateMachineArn: StepFuncName,
         });
-        const response = await lambda.send(command);
+        const response = await stepFunc.send(command);
         result.result = response;
         result.isSuccessful = true;
         return result;
@@ -383,20 +367,45 @@ async function GetStepFunc(Region, LambdaName) {
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLambda Error !!!", error);
-        ui.logToOutput("api.GetLambda Error !!!", error);
+        ui.showErrorMessage("api.GetStepFunc Error !!!", error);
+        ui.logToOutput("api.GetStepFunc Error !!!", error);
         return result;
     }
 }
-const client_lambda_4 = require("@aws-sdk/client-lambda");
-async function GetLambdaConfiguration(Region, LambdaName) {
+// import { GetFunctionConfigurationCommand, GetFunctionConfigurationCommandOutput } from "@aws-sdk/client-stepFunc";
+// export async function GetStepFuncConfiguration(
+//   Region: string,
+//   StepFuncName: string
+// ): Promise<MethodResult<GetFunctionConfigurationCommandOutput>> {
+//   let result: MethodResult<GetFunctionConfigurationCommandOutput> = new MethodResult<GetFunctionConfigurationCommandOutput>();
+//   try {
+//     const stepFunc = await GetStepFuncClient(Region);
+//     const command = new GetFunctionConfigurationCommand({
+//       FunctionName: StepFuncName,
+//     });
+//     const response = await stepFunc.send(command);
+//     result.result = response;
+//     result.isSuccessful = true;
+//     return result;
+//   } catch (error: any) {
+//     result.isSuccessful = false;
+//     result.error = error;
+//     ui.showErrorMessage("api.GetStepFuncConfiguration Error !!!", error);
+//     ui.logToOutput("api.GetStepFuncConfiguration Error !!!", error);
+//     return result;
+//   }
+// }
+const client_sfn_2 = require("@aws-sdk/client-sfn");
+async function UpdateStepFuncCode(Region, StepFuncName, CodeFilePath) {
     let result = new MethodResult_1.MethodResult();
     try {
-        const lambda = await GetLambdaClient(Region);
-        const command = new client_lambda_4.GetFunctionConfigurationCommand({
-            FunctionName: LambdaName,
+        const stepFunc = await GetStepFuncClient(Region);
+        const definition = fs.readFileSync(CodeFilePath, "utf8");
+        const command = new client_sfn_2.UpdateStateMachineCommand({
+            stateMachineArn: StepFuncName,
+            definition: definition,
         });
-        const response = await lambda.send(command);
+        const response = await stepFunc.send(command);
         result.result = response;
         result.isSuccessful = true;
         return result;
@@ -404,38 +413,8 @@ async function GetLambdaConfiguration(Region, LambdaName) {
     catch (error) {
         result.isSuccessful = false;
         result.error = error;
-        ui.showErrorMessage("api.GetLambdaConfiguration Error !!!", error);
-        ui.logToOutput("api.GetLambdaConfiguration Error !!!", error);
-        return result;
-    }
-}
-const client_lambda_5 = require("@aws-sdk/client-lambda");
-async function UpdateStepFuncCode(Region, LambdaName, CodeFilePath) {
-    let result = new MethodResult_1.MethodResult();
-    try {
-        const lambda = await GetLambdaClient(Region);
-        let zipresponse = await ZipTextFile(CodeFilePath);
-        //wait for the zip file to be created
-        while (!fs.existsSync(zipresponse.result)) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        const zipFileContents = fs.readFileSync(zipresponse.result);
-        const command = new client_lambda_5.UpdateFunctionCodeCommand({
-            FunctionName: LambdaName,
-            ZipFile: zipFileContents,
-        });
-        const response = await lambda.send(command);
-        // Delete the zip file
-        fs.unlinkSync(zipresponse.result);
-        result.result = response;
-        result.isSuccessful = true;
-        return result;
-    }
-    catch (error) {
-        result.isSuccessful = false;
-        result.error = error;
-        ui.showErrorMessage("api.UpdateLambdaCode Error !!!", error);
-        ui.logToOutput("api.UpdateLambdaCode Error !!!", error);
+        ui.showErrorMessage("api.UpdateStepFuncCode Error !!!", error);
+        ui.logToOutput("api.UpdateStepFuncCode Error !!!", error);
         return result;
     }
 }
@@ -479,7 +458,7 @@ async function GetSTSClient(region) {
     const iamClient = new client_sts_1.STSClient({
         region,
         credentials,
-        endpoint: LambdaTreeView.StepFuncTreeView.Current?.AwsEndPoint,
+        endpoint: StepFuncTreeView.StepFuncTreeView.Current?.AwsEndPoint,
     });
     return iamClient;
 }

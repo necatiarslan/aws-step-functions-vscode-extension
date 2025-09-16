@@ -335,15 +335,9 @@ class StepFuncTreeView {
         }
         ui.logToOutput("api.TriggerStepFunc Success !!!");
         ui.logToOutput("RequestId: " + result.result.$metadata.requestId);
-        // Convert Uint8Array to string
-        const payloadString = new TextDecoder("utf-8").decode(result.result.Payload);
-        // Parse the JSON string
-        const parsedPayload = JSON.parse(payloadString);
-        // Pretty-print the JSON with 2-space indentation
-        let payload = JSON.stringify(parsedPayload, null, 2);
-        if (result.result && result.result.Payload) {
-            this.treeDataProvider.AddResponsePayload(node, payloadString);
-            ui.logToOutput("api.TriggerStepFunc PayLoad \n" + payload);
+        if (result.result && result.result.$metadata.requestId) {
+            this.treeDataProvider.AddResponsePayload(node, result.result.$metadata.requestId);
+            ui.logToOutput("api.TriggerStepFunc PayLoad \n" + result.result.$metadata.requestId);
         }
         ui.showInfoMessage('StepFunc Triggered Successfully');
         this.SetNodeRunning(node, false);
