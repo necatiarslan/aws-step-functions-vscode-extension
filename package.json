@@ -1,0 +1,352 @@
+{
+  "name": "aws-lambda-vscode-extension",
+  "displayName": "Aws Step Functions",
+  "description": "Update, Trigger & Monitor your Aws Step Functions",
+  "version": "1.0.0",
+  "publisher": "NecatiARSLAN",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/necatiarslan/aws-step-functions-vscode-extension"
+  },
+  "icon": "media/aws-step-functions-logo-extension.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "AWS",
+    "Step Functions"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "LambdaTreeView.Refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "LambdaTreeView.Filter",
+        "title": "Filter",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "LambdaTreeView.ShowOnlyFavorite",
+        "title": "Show Only Favorite",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "LambdaTreeView.ShowHiddenNodes",
+        "title": "Show Hidden Nodes",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "LambdaTreeView.AddToFav",
+        "title": "Fav"
+      },
+      {
+        "command": "LambdaTreeView.DeleteFromFav",
+        "title": "UnFav"
+      },
+      {
+        "command": "LambdaTreeView.HideNode",
+        "title": "Hide"
+      },
+      {
+        "command": "LambdaTreeView.UnHideNode",
+        "title": "UnHide"
+      },
+      {
+        "command": "LambdaTreeView.AddLambda",
+        "title": "Add Lambda",
+        "icon": "$(add)"
+      },
+      {
+        "command": "LambdaTreeView.RemoveLambda",
+        "title": "Remove Lambda"
+      },
+      {
+        "command": "LambdaTreeView.Goto",
+        "title": "Goto Aws Console"
+      },
+      {
+        "command": "LambdaTreeView.SelectAwsProfile",
+        "title": "Select Aws Profile",
+        "icon": "$(account)"
+      },
+      {
+        "command": "LambdaTreeView.TriggerLambda",
+        "title": "Trigger",
+        "icon": "$(run)"
+      },
+      {
+        "command": "LambdaTreeView.LambdaView",
+        "title": "Lambda View",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "LambdaTreeView.ViewLatestLog",
+        "title": "Latest Logs",
+        "icon": "$(output)"
+      },
+      {
+        "command": "LambdaTreeView.AddPayloadPath",
+        "title": "Add Payload File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "LambdaTreeView.RemovePayloadPath",
+        "title": "Remove Paylod File",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "LambdaTreeView.RefreshLogs",
+        "title": "Refresh Logs",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "LambdaTreeView.ViewLog",
+        "title": "View Log",
+        "icon": "$(output)"
+      },
+      {
+        "command": "LambdaTreeView.ViewResponsePayload",
+        "title": "View Payload",
+        "icon": "$(output)"
+      },
+      {
+        "command": "LambdaTreeView.SetCodePath",
+        "title": "Set Code Path",
+        "icon": "$(folder-library)"
+      },
+      {
+        "command": "LambdaTreeView.UpdateLambdaCodes",
+        "title": "Update Lambda Codes",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "LambdaTreeView.UnsetCodePath",
+        "title": "Unset Code Path",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "LambdaTreeView.PrintLambda",
+        "title": "Print Lambda",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "LambdaTreeView.TestAwsConnection",
+        "title": "Test Aws Connection"
+      },
+      {
+        "command": "LambdaTreeView.UpdateAwsEndPoint",
+        "title": "Update Aws EndPoint"
+      },
+      {
+        "command": "LambdaTreeView.Donate",
+        "title": "Donate"
+      },
+      {
+        "command": "LambdaTreeView.BugAndNewFeature",
+        "title": "Bug and New Feature"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "LambdaTreeView.ShowOnlyFavorite",
+          "when": "view == LambdaTreeView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "LambdaTreeView.ShowHiddenNodes",
+          "when": "view == LambdaTreeView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "LambdaTreeView.Filter",
+          "when": "view == LambdaTreeView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "LambdaTreeView.AddLambda",
+          "when": "view == LambdaTreeView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "LambdaTreeView.SelectAwsProfile",
+          "when": "view == LambdaTreeView",
+          "group": "navigation@6"
+        },
+        {
+          "command": "LambdaTreeView.Refresh",
+          "when": "view == LambdaTreeView",
+          "group": "navigation@7"
+        },
+        {
+          "command": "LambdaTreeView.TestAwsConnection",
+          "when": "view == LambdaTreeView",
+          "group": "other"
+        },
+        {
+          "command": "LambdaTreeView.UpdateAwsEndPoint",
+          "when": "view == LambdaTreeView",
+          "group": "other"
+        },
+        {
+          "command": "LambdaTreeView.Donate",
+          "when": "view == LambdaTreeView",
+          "group": "other"
+        },
+        {
+          "command": "LambdaTreeView.BugAndNewFeature",
+          "when": "view == LambdaTreeView",
+          "group": "other"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "LambdaTreeView.AddToFav",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "Filter"
+        },
+        {
+          "command": "LambdaTreeView.DeleteFromFav",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "Filter"
+        },
+        {
+          "command": "LambdaTreeView.HideNode",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "Filter"
+        },
+        {
+          "command": "LambdaTreeView.UnHideNode",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "Filter"
+        },
+        {
+          "command": "LambdaTreeView.RemoveLambda",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "Lambda"
+        },
+        {
+          "command": "LambdaTreeView.Goto",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "Lambda"
+        },
+        {
+          "command": "LambdaTreeView.TriggerLambda",
+          "when": "view == LambdaTreeView && (viewItem == Lambda || viewItem == TriggerConfig || viewItem == TriggerSavedPayload || viewItem == TriggerWithPayload || viewItem == TriggerFilePayload || viewItem == TriggerNoPayload)",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.ViewLatestLog",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.PrintLambda",
+          "when": "view == LambdaTreeView && viewItem == Lambda",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.SetCodePath",
+          "when": "view == LambdaTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.UnsetCodePath",
+          "when": "view == LambdaTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.UpdateLambdaCodes",
+          "when": "view == LambdaTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.AddPayloadPath",
+          "when": "view == LambdaTreeView && viewItem == TriggerGroup",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.RemovePayloadPath",
+          "when": "view == LambdaTreeView && viewItem == TriggerFilePayload",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.RefreshLogs",
+          "when": "view == LambdaTreeView && viewItem == LogGroup",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.ViewLog",
+          "when": "view == LambdaTreeView && viewItem == LogStream",
+          "group": "inline"
+        },
+        {
+          "command": "LambdaTreeView.ViewResponsePayload",
+          "when": "view == LambdaTreeView && viewItem == ResponsePayload",
+          "group": "inline"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aws-lambda-vscode-extension",
+          "title": "Aws Lambda",
+          "icon": "media/aws-step-functions-logo-activitybar.png"
+        }
+      ]
+    },
+    "views": {
+      "aws-lambda-vscode-extension": [
+        {
+          "id": "LambdaTreeView",
+          "name": "Aws Step Functions",
+          "icon": "media/aws-step-functions-logo-activitybar.png"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "LambdaTreeView",
+        "contents": "Please click [+] to add your lambda Functions. \n [Add Lambda](command:LambdaTreeView.AddLambda) \n Leave lambda name empty to get all your buckets. You can enter lambda name partially. \n If you can not connect after a while check your Aws Credentials, Network and Proxy settings. \n\n\n\n To Access Aws, you need to configure aws credentials. \n For more detail on Aws Credentials [Click Here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) \n For a Youtube Tutorial [Click Here](https://www.youtube.com/watch?v=SON8sY1iOBU) \n [Update Aws EndPoint](command:LambdaTreeView.UpdateAwsEndPoint)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.3",
+    "@types/node": "^24.5.0",
+    "@types/vscode": "^1.104.0",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.35.0",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.888.0",
+    "@aws-sdk/client-iam": "^3.888.0",
+    "@aws-sdk/client-lambda": "^3.888.0",
+    "@aws-sdk/client-sts": "^3.888.0",
+    "@aws-sdk/credential-providers": "^3.888.0",
+    "@vscode-elements/elements": "^2.3.1",
+    "@vscode/codicons": "^0.0.40",
+    "archiver": "^7.0.1",
+    "tmp": "^0.2.5"
+  }
+}
