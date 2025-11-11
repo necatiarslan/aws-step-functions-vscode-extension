@@ -40,3 +40,10 @@ add-step-function:
 trigger-step-function:
     aws --endpoint-url=http://localhost:4566 stepfunctions start-execution \
     --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:my_step_function
+
+list-step-function-executions:
+    aws --endpoint-url=http://localhost:4566 stepfunctions list-executions \
+    --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:my_step_function
+
+list-cloudwatch-logs:
+    aws --endpoint-url=http://localhost:4566 logs describe-log-groups

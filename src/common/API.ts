@@ -132,11 +132,8 @@ export async function TriggerStepFunc(
       stateMachineArn,
       input,
     });
-    const startRes = await sfn.send(startCmd);
-    // Wrap response into MethodResult; keep existing InvokeCommandOutput shape not applicable
-    // Return a lightweight object with executionArn in result.result (caller must adapt)
-    const fakeResponse: any = { $metadata: startRes.$metadata, Payload: Buffer.from(JSON.stringify({ executionArn: startRes.executionArn })) };
-    result.result = fakeResponse;
+    const startResponse = await sfn.send(startCmd);
+    result.result = startResponse;
     result.isSuccessful = true;
     return result;
    } catch (error: any) {
@@ -156,14 +153,14 @@ import {
 
 export async function GetLatestStepFuncLogStreamName(
   Region: string,
-  StepFunc: string
+  StepFuncArn: string
 ): Promise<MethodResult<string>> {
-  ui.logToOutput("GetLatestStepFuncLogStreamName for StepFunc function: " + StepFunc);
+  ui.logToOutput("GetLatestStepFuncLogStreamName for StepFunc function: " + StepFuncArn);
   let result: MethodResult<string> = new MethodResult<string>();
 
   try {
     // Get the log group name
-    const logGroupName = GetStepFuncLogGroupName(StepFunc);
+    const logGroupName = GetStepFuncLogGroupName(StepFuncArn);
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -206,8 +203,26 @@ export async function GetLatestStepFuncLogStreamName(
   }
 }
 
-export function GetStepFuncLogGroupName(StepFunc: string) {
-  return `/aws/stepFunc/${StepFunc}`;
+export function GetStepFuncLogGroupName(StepFuncArn: string) {
+  return `/aws/vendedlogs/states/${GetStepFuncRegion(StepFuncArn)}/${GetStepFuncName(StepFuncArn)}`;
+}
+
+export function GetStepFuncName(stepFuncArn: string): string {
+  if(stepFuncArn)
+  {
+    let parts = stepFuncArn.split(":");
+    return parts[parts.length - 1];
+  }
+  return "";
+}
+
+export function GetStepFuncRegion(stepFuncArn: string): string {
+  if(stepFuncArn)
+  {
+    let parts = stepFuncArn.split(":");
+    return parts[3];
+  }
+  return "";
 }
 
 export async function GetLatestStepFuncLogs(

@@ -8,6 +8,8 @@ exports.ParseJson = ParseJson;
 exports.TriggerStepFunc = TriggerStepFunc;
 exports.GetLatestStepFuncLogStreamName = GetLatestStepFuncLogStreamName;
 exports.GetStepFuncLogGroupName = GetStepFuncLogGroupName;
+exports.GetStepFuncName = GetStepFuncName;
+exports.GetStepFuncRegion = GetStepFuncRegion;
 exports.GetLatestStepFuncLogs = GetLatestStepFuncLogs;
 exports.GetLatestStepFuncLogStreams = GetLatestStepFuncLogStreams;
 exports.GetStepFuncLogs = GetStepFuncLogs;
@@ -129,11 +131,8 @@ async function TriggerStepFunc(Region, StepFuncArn, Parameters) {
             stateMachineArn,
             input,
         });
-        const startRes = await sfn.send(startCmd);
-        // Wrap response into MethodResult; keep existing InvokeCommandOutput shape not applicable
-        // Return a lightweight object with executionArn in result.result (caller must adapt)
-        const fakeResponse = { $metadata: startRes.$metadata, Payload: Buffer.from(JSON.stringify({ executionArn: startRes.executionArn })) };
-        result.result = fakeResponse;
+        const startResponse = await sfn.send(startCmd);
+        result.result = startResponse;
         result.isSuccessful = true;
         return result;
     }
@@ -146,12 +145,12 @@ async function TriggerStepFunc(Region, StepFuncArn, Parameters) {
     }
 }
 const client_cloudwatch_logs_2 = require("@aws-sdk/client-cloudwatch-logs");
-async function GetLatestStepFuncLogStreamName(Region, StepFunc) {
-    ui.logToOutput("GetLatestStepFuncLogStreamName for StepFunc function: " + StepFunc);
+async function GetLatestStepFuncLogStreamName(Region, StepFuncArn) {
+    ui.logToOutput("GetLatestStepFuncLogStreamName for StepFunc function: " + StepFuncArn);
     let result = new MethodResult_1.MethodResult();
     try {
         // Get the log group name
-        const logGroupName = GetStepFuncLogGroupName(StepFunc);
+        const logGroupName = GetStepFuncLogGroupName(StepFuncArn);
         const cloudwatchlogs = await GetCloudWatchClient(Region);
         // Get the streams sorted by the latest event time
         const describeLogStreamsCommand = new client_cloudwatch_logs_2.DescribeLogStreamsCommand({
@@ -189,8 +188,22 @@ async function GetLatestStepFuncLogStreamName(Region, StepFunc) {
         return result;
     }
 }
-function GetStepFuncLogGroupName(StepFunc) {
-    return `/aws/stepFunc/${StepFunc}`;
+function GetStepFuncLogGroupName(StepFuncArn) {
+    return `/aws/vendedlogs/states/${GetStepFuncRegion(StepFuncArn)}/${GetStepFuncName(StepFuncArn)}`;
+}
+function GetStepFuncName(stepFuncArn) {
+    if (stepFuncArn) {
+        let parts = stepFuncArn.split(":");
+        return parts[parts.length - 1];
+    }
+    return "";
+}
+function GetStepFuncRegion(stepFuncArn) {
+    if (stepFuncArn) {
+        let parts = stepFuncArn.split(":");
+        return parts[3];
+    }
+    return "";
 }
 async function GetLatestStepFuncLogs(Region, StepFunc) {
     ui.logToOutput("Getting logs for StepFunc function: " + StepFunc);

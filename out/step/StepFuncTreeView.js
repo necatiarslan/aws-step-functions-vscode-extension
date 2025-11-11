@@ -334,10 +334,13 @@ class StepFuncTreeView {
             return;
         }
         ui.logToOutput("api.TriggerStepFunc Success !!!");
-        ui.logToOutput("RequestId: " + result.result.$metadata.requestId);
-        if (result.result && result.result.$metadata.requestId) {
-            this.treeDataProvider.AddResponsePayload(node, result.result.$metadata.requestId);
-            ui.logToOutput("api.TriggerStepFunc PayLoad \n" + result.result.$metadata.requestId);
+        const executionArn = result.result?.executionArn;
+        if (executionArn) {
+            this.treeDataProvider.AddResponsePayload(node, executionArn);
+            ui.logToOutput("api.TriggerStepFunc executionArn \n" + executionArn);
+        }
+        else {
+            ui.logToOutput("api.TriggerStepFunc: executionArn is undefined");
         }
         ui.showInfoMessage('StepFunc Triggered Successfully');
         this.SetNodeRunning(node, false);
@@ -475,6 +478,16 @@ class StepFuncTreeView {
         ui.logToOutput("Code Path: " + node.CodePath);
         ui.showInfoMessage('Code Path Removed Successfully');
     }
+    async OpenCodeFile(node) {
+        ui.logToOutput('StepFuncTreeView.OpenCodeFile Started');
+        if (node.TreeItemType === StepFuncTreeItem_1.TreeItemType.CodePath && node.Parent) {
+            node = node.Parent;
+        }
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.Code) {
+            return;
+        }
+        ui.openFile(node.CodePath);
+    }
     async ViewLog(node) {
         ui.logToOutput('StepFuncTreeView.ViewLog Started');
         if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.LogStream) {
@@ -538,13 +551,11 @@ class StepFuncTreeView {
         if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.ResponsePayload) {
             return;
         }
-        if (!node.ResponsePayload) {
+        if (!node.ExecutionArn) {
             return;
         }
-        const parsedPayload = JSON.parse(node.ResponsePayload);
-        let jsonString = JSON.stringify(parsedPayload, null, 2);
-        ui.logToOutput(jsonString);
-        ui.ShowTextDocument(jsonString, "json");
+        ui.logToOutput(node.ExecutionArn);
+        ui.ShowTextDocument(node.ExecutionArn, "text");
     }
 }
 exports.StepFuncTreeView = StepFuncTreeView;

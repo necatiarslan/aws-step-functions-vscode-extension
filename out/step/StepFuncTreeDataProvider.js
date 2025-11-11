@@ -45,7 +45,7 @@ class StepFuncTreeDataProvider {
         let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem("Response - " + currentTime, StepFuncTreeItem_1.TreeItemType.ResponsePayload);
         treeItem.Region = node.Region;
         treeItem.StepFuncArn = node.StepFuncArn;
-        treeItem.ResponsePayload = payloadString;
+        treeItem.ExecutionArn = payloadString;
         treeItem.Parent = node;
         node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         node.Children.push(treeItem);
@@ -88,7 +88,7 @@ class StepFuncTreeDataProvider {
         }
     }
     NewStepFuncNode(Region, StepFuncArn) {
-        let StepFuncName = StepFuncTreeItem_1.StepFuncTreeItem.getStepFuncName(StepFuncArn);
+        let StepFuncName = StepFuncTreeItem_1.StepFuncTreeItem.GetStepFuncName(StepFuncArn);
         let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem(StepFuncName, StepFuncTreeItem_1.TreeItemType.StepFunc);
         treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         treeItem.Region = Region;

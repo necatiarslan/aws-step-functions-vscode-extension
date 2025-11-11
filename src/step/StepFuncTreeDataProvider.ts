@@ -56,7 +56,7 @@ export class StepFuncTreeDataProvider implements vscode.TreeDataProvider<StepFun
 		let treeItem = new StepFuncTreeItem("Response - " + currentTime, TreeItemType.ResponsePayload);
 		treeItem.Region = node.Region;
 		treeItem.StepFuncArn = node.StepFuncArn;
-		treeItem.ResponsePayload = payloadString
+		treeItem.ExecutionArn = payloadString
 		treeItem.Parent = node
 		node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed
 		node.Children.push(treeItem)
@@ -108,7 +108,7 @@ export class StepFuncTreeDataProvider implements vscode.TreeDataProvider<StepFun
 
 	private NewStepFuncNode(Region: string, StepFuncArn: string) : StepFuncTreeItem
 	{
-		let StepFuncName = StepFuncTreeItem.getStepFuncName(StepFuncArn);
+		let StepFuncName = StepFuncTreeItem.GetStepFuncName(StepFuncArn);
 		let treeItem = new StepFuncTreeItem(StepFuncName, TreeItemType.StepFunc);
 		treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 		treeItem.Region = Region;

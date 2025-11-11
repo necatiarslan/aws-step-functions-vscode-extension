@@ -17,7 +17,7 @@ class StepFuncTreeItem extends vscode.TreeItem {
     TriggerConfigPath;
     codePath;
     PayloadPath;
-    ResponsePayload;
+    ExecutionArn;
     EnvironmentVariableName;
     EnvironmentVariableValue;
     IsRunning = false;
@@ -28,7 +28,7 @@ class StepFuncTreeItem extends vscode.TreeItem {
         this.TreeItemType = treeItemType;
         this.refreshUI();
     }
-    static getStepFuncName(stepFuncArn) {
+    static GetStepFuncName(stepFuncArn) {
         if (stepFuncArn) {
             let parts = stepFuncArn.split(":");
             return parts[parts.length - 1];

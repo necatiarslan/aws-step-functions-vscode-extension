@@ -77,6 +77,9 @@ function activate(context) {
     vscode.commands.registerCommand('StepFuncTreeView.UnsetCodePath', async (node) => {
         await treeView.UnsetCodePath(node);
     });
+    vscode.commands.registerCommand('StepFuncTreeView.OpenCodeFile', async (node) => {
+        await treeView.OpenCodeFile(node);
+    });
     vscode.commands.registerCommand('StepFuncTreeView.ViewLog', async (node) => {
         await treeView.ViewLog(node);
     });

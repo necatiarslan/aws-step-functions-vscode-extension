@@ -10,7 +10,7 @@
   },
   "icon": "media/aws-step-functions-logo-extension.png",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.104.0"
   },
   "categories": [
     "Other"
@@ -131,6 +131,11 @@
         "command": "StepFuncTreeView.UnsetCodePath",
         "title": "Unset Code Path",
         "icon": "$(trash)"
+      },
+      {
+        "command": "StepFuncTreeView.OpenCodeFile",
+        "title": "Open Source File",
+        "icon": "$(go-to-file)"
       },
       {
         "command": "StepFuncTreeView.PrintStepFunc",
@@ -260,6 +265,11 @@
         },
         {
           "command": "StepFuncTreeView.UnsetCodePath",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.OpenCodeFile",
           "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
           "group": "inline"
         },

@@ -366,13 +366,16 @@ export class StepFuncTreeView {
 			return;
 		}
 		ui.logToOutput("api.TriggerStepFunc Success !!!");
-		ui.logToOutput("RequestId: " + result.result.$metadata.requestId);
 
-
-		if(result.result && result.result.$metadata.requestId)
+		const executionArn = result.result?.executionArn;
+		if(executionArn)
 		{
-			this.treeDataProvider.AddResponsePayload(node, result.result.$metadata.requestId);
-			ui.logToOutput("api.TriggerStepFunc PayLoad \n" + result.result.$metadata.requestId);
+			this.treeDataProvider.AddResponsePayload(node, executionArn);
+			ui.logToOutput("api.TriggerStepFunc executionArn \n" + executionArn);
+		}
+		else
+		{
+			ui.logToOutput("api.TriggerStepFunc: executionArn is undefined");
 		}
 		
 		ui.showInfoMessage('StepFunc Triggered Successfully');
@@ -504,6 +507,14 @@ export class StepFuncTreeView {
 		ui.showInfoMessage('Code Path Removed Successfully');
 	}
 
+	async OpenCodeFile(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.OpenCodeFile Started');
+		if(node.TreeItemType === TreeItemType.CodePath && node.Parent) { node = node.Parent;}
+		if(node.TreeItemType !== TreeItemType.Code) { return;}
+
+		ui.openFile(node.CodePath!);
+	}
+
 	async ViewLog(node: StepFuncTreeItem) {
 		ui.logToOutput('StepFuncTreeView.ViewLog Started');
 		if(node.TreeItemType !== TreeItemType.LogStream) { return;}
@@ -562,11 +573,9 @@ export class StepFuncTreeView {
 	async ViewResponsePayload(node: StepFuncTreeItem) {
 		ui.logToOutput('StepFuncTreeView.ViewResponsePayload Started');
 		if(node.TreeItemType !== TreeItemType.ResponsePayload) { return; }
-		if(!node.ResponsePayload){ return; }
+		if(!node.ExecutionArn){ return; }
 
-		const parsedPayload = JSON.parse(node.ResponsePayload);
-		let jsonString = JSON.stringify(parsedPayload, null, 2);
-		ui.logToOutput(jsonString);
-		ui.ShowTextDocument(jsonString, "json");
+		ui.logToOutput(node.ExecutionArn);
+		ui.ShowTextDocument(node.ExecutionArn, "text");
 	}
 }

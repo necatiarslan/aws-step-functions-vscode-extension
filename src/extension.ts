@@ -100,6 +100,10 @@ export function activate(context: vscode.ExtensionContext) {
 		await treeView.UnsetCodePath(node);
 	});
 
+	vscode.commands.registerCommand('StepFuncTreeView.OpenCodeFile', async (node: StepFuncTreeItem) => {
+		await treeView.OpenCodeFile(node);
+	});
+
 	vscode.commands.registerCommand('StepFuncTreeView.ViewLog', async (node: StepFuncTreeItem) => {
 		await treeView.ViewLog(node);
 	});
