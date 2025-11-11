@@ -7,7 +7,8 @@ class StepFuncTreeItem extends vscode.TreeItem {
     IsFav = false;
     TreeItemType;
     Text;
-    StepFunc = "";
+    StepFuncArn = "";
+    StepFuncName = "";
     Region = "";
     LogStreamName;
     Parent;
@@ -23,8 +24,16 @@ class StepFuncTreeItem extends vscode.TreeItem {
     constructor(text, treeItemType) {
         super(text);
         this.Text = text;
+        this.StepFuncName = text;
         this.TreeItemType = treeItemType;
         this.refreshUI();
+    }
+    static getStepFuncName(stepFuncArn) {
+        if (stepFuncArn) {
+            let parts = stepFuncArn.split(":");
+            return parts[parts.length - 1];
+        }
+        return "";
     }
     set CodePath(path) {
         if (this.TreeItemType !== TreeItemType.Code) {
@@ -33,7 +42,7 @@ class StepFuncTreeItem extends vscode.TreeItem {
         this.codePath = path;
         if (path && this.Children.length === 0) {
             let node = new StepFuncTreeItem(path, TreeItemType.CodePath);
-            node.StepFunc = this.StepFunc;
+            node.StepFuncArn = this.StepFuncArn;
             node.Region = this.Region;
             node.Parent = this;
             this.Children.push(node);
@@ -139,7 +148,7 @@ class StepFuncTreeItem extends vscode.TreeItem {
     }
     IsFilterStringMatchAnyChildren(node, FilterString) {
         for (var n of node.Children) {
-            if (n.Text.includes(FilterString) || n.Region?.includes(FilterString) || n.StepFunc?.includes(FilterString)) {
+            if (n.Text.includes(FilterString) || n.Region?.includes(FilterString) || n.StepFuncArn?.includes(FilterString)) {
                 return true;
             }
             else if (n.Children.length > 0) {

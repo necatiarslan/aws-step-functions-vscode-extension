@@ -274,12 +274,12 @@ export class StepFuncTreeView {
 		var resultStepFunc = await api.GetStepFuncList(selectedRegion, selectedStepFuncName);
 		if(!resultStepFunc.isSuccessful){ return; }
 
-		let selectedStepFuncList = await vscode.window.showQuickPick(resultStepFunc.result, {canPickMany:true, placeHolder: 'Select StepFunc(s)'});
-		if(!selectedStepFuncList || selectedStepFuncList.length===0){ return; }
+		let selectedStepFuncArnList = await vscode.window.showQuickPick(resultStepFunc.result, {canPickMany:true, placeHolder: 'Select StepFunc(s)'});
+		if(!selectedStepFuncArnList || selectedStepFuncArnList.length===0){ return; }
 
-		for(var selectedStepFunc of selectedStepFuncList)
+		for(var selectedStepFuncArn of selectedStepFuncArnList)
 		{
-			this.treeDataProvider.AddStepFunc(selectedRegion, selectedStepFunc);
+			this.treeDataProvider.AddStepFunc(selectedRegion, selectedStepFuncArn);
 		}
 		this.SaveState();
 	}
@@ -289,7 +289,7 @@ export class StepFuncTreeView {
 
 		if(node.TreeItemType !== TreeItemType.StepFunc) { return;}
 
-		this.treeDataProvider.RemoveStepFunc(node.Region, node.StepFunc);
+		this.treeDataProvider.RemoveStepFunc(node.Region, node.StepFuncArn);
 		this.SaveState();
 	}
 
@@ -357,7 +357,7 @@ export class StepFuncTreeView {
 			}
 		}
 		
-		let result = await api.TriggerStepFunc(node.Region, node.StepFunc, param);
+		let result = await api.TriggerStepFunc(node.Region, node.StepFuncArn, param);
 		if(!result.isSuccessful)
 		{
 			ui.logToOutput("api.TriggerStepFunc Error !!!", result.error);
@@ -388,7 +388,7 @@ export class StepFuncTreeView {
 		if(node.IsRunning) { return; }
 		if(node.TreeItemType !== TreeItemType.StepFunc) { return;}
 		this.SetNodeRunning(node, true);
-		let resultLogStream = await api.GetLatestStepFuncLogStreamName(node.Region, node.StepFunc);
+		let resultLogStream = await api.GetLatestStepFuncLogStreamName(node.Region, node.StepFuncArn);
 		if(!resultLogStream.isSuccessful)
 		{
 			ui.logToOutput("api.GetLatestStepFuncLogStreamName Error !!!", resultLogStream.error);
@@ -397,7 +397,7 @@ export class StepFuncTreeView {
 			return;
 		}
 		
-		const logGroupName = api.GetStepFuncLogGroupName(node.StepFunc);
+		const logGroupName = api.GetStepFuncLogGroupName(node.StepFuncArn);
 		CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, resultLogStream.result);
 		this.SetNodeRunning(node, false);
 	}
@@ -434,7 +434,7 @@ export class StepFuncTreeView {
 		ui.logToOutput('StepFuncTreeView.PrintStepFunc Started');
 		if(node.TreeItemType !== TreeItemType.StepFunc) { return;}
 
-		let result = await api.GetStepFunc(node.Region, node.StepFunc);
+		let result = await api.GetStepFunc(node.Region, node.StepFuncArn);
 		if(!result.isSuccessful)
 		{
 			ui.logToOutput("api.GetStepFunc Error !!!", result.error);
@@ -458,7 +458,7 @@ export class StepFuncTreeView {
 			return; 
 		}
 
-		let result = await api.UpdateStepFuncCode(node.Region, node.StepFunc, node.CodePath);
+		let result = await api.UpdateStepFuncCode(node.Region, node.StepFuncArn, node.CodePath);
 		if(!result.isSuccessful)
 		{
 			ui.logToOutput("api.UpdateStepFuncCode Error !!!", result.error);
@@ -486,7 +486,7 @@ export class StepFuncTreeView {
 		if(!selectedPath || selectedPath.length===0){ return; }
 
 		node.CodePath = selectedPath[0].path;
-		this.treeDataProvider.AddCodePath(node.Region, node.StepFunc, node.CodePath);
+		this.treeDataProvider.AddCodePath(node.Region, node.StepFuncArn, node.CodePath);
 		this.SaveState();
 		ui.logToOutput("Code Path: " + node.CodePath);
 		ui.showInfoMessage('Code Path Set Successfully');
@@ -498,7 +498,7 @@ export class StepFuncTreeView {
 		if(node.TreeItemType !== TreeItemType.Code) { return;}
 
 		node.CodePath = undefined
-		this.treeDataProvider.RemoveCodePath(node.Region, node.StepFunc);
+		this.treeDataProvider.RemoveCodePath(node.Region, node.StepFuncArn);
 		this.SaveState();
 		ui.logToOutput("Code Path: " + node.CodePath);
 		ui.showInfoMessage('Code Path Removed Successfully');
@@ -510,7 +510,7 @@ export class StepFuncTreeView {
 
 		if(!node.LogStreamName) { return; }
 		
-		const logGroupName = api.GetStepFuncLogGroupName(node.StepFunc);
+		const logGroupName = api.GetStepFuncLogGroupName(node.StepFuncArn);
 		CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, node.LogStreamName);
 	}
 
@@ -519,7 +519,7 @@ export class StepFuncTreeView {
 		if(node.IsRunning) { return; }
 		if(node.TreeItemType !== TreeItemType.LogGroup) { return;}
 		this.SetNodeRunning(node, true);
-		let resultLogs = await api.GetLatestStepFuncLogStreams(node.Region, node.StepFunc);
+		let resultLogs = await api.GetLatestStepFuncLogStreams(node.Region, node.StepFuncArn);
 		if(!resultLogs.isSuccessful)
 		{
 			ui.logToOutput("api.GetLatestStepFuncLogStreams Error !!!", resultLogs.error);

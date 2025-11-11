@@ -13,7 +13,7 @@ import { parseKnownFiles, SourceProfileInit } from "../aws-sdk/parseKnownFiles";
 import { ParsedIniData } from "@aws-sdk/types";
 import * as StepFuncTreeView from '../step/StepFuncTreeView';
 import * as fs from 'fs';
-import * as archiver from 'archiver';
+
 
 export async function GetCredentials() {
   let credentials;
@@ -85,7 +85,7 @@ export async function GetStepFuncList(
         for (const sm of res.stateMachines) {
           const name = sm.name ?? sm.stateMachineArn ?? "";
           if (!StepFuncName || name.includes(StepFuncName)) {
-            result.result.push(name);
+            result.result.push(sm.stateMachineArn ?? "");
           }
         }
       }
@@ -118,7 +118,7 @@ export function ParseJson(jsonString: string) {
 import { StartExecutionCommandOutput } from "@aws-sdk/client-sfn";
 export async function TriggerStepFunc(
   Region: string,
-  StepFuncName: string,
+  StepFuncArn: string,
   Parameters: { [key: string]: any }
 ): Promise<MethodResult<StartExecutionCommandOutput>> {
   let result: MethodResult<StartExecutionCommandOutput> = new MethodResult<StartExecutionCommandOutput>();
@@ -127,8 +127,9 @@ export async function TriggerStepFunc(
     // Start Step Functions execution
     const sfn = await GetStepFuncClient(Region);
     const input = JSON.stringify(Parameters ?? {});
+    const stateMachineArn = StepFuncArn;
     const startCmd = new StartExecutionCommand({
-      stateMachineArn: StepFuncName, // StepFuncName should be ARN or name resolved by caller
+      stateMachineArn,
       input,
     });
     const startRes = await sfn.send(startCmd);
@@ -517,19 +518,7 @@ export async function ZipTextFile(inputPath: string, outputZipPath?: string): Pr
     }
 
     const output = fs.createWriteStream(outputZipPath);
-    const archive = archiver('zip', {
-      zlib: { level: 9 } // Set compression level
-    });
 
-    archive.pipe(output);
-
-    if (fs.lstatSync(inputPath).isDirectory()) {
-      archive.directory(inputPath, false);
-    } else {
-      archive.file(inputPath, { name: basename(inputPath) });
-    }
-
-    archive.finalize();
 
     result.result = outputZipPath;
     result.isSuccessful = true;

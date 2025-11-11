@@ -17,14 +17,14 @@ class StepFuncTreeDataProvider {
         }
         this._onDidChangeTreeData.fire();
     }
-    AddStepFunc(Region, StepFunc) {
+    AddStepFunc(Region, StepFuncArn) {
         for (var item of StepFuncTreeView_1.StepFuncTreeView.Current.StepFuncList) {
-            if (item.Region === Region && item.StepFunc === StepFunc) {
+            if (item.Region === Region && item.StepFunc === StepFuncArn) {
                 return;
             }
         }
-        StepFuncTreeView_1.StepFuncTreeView.Current.StepFuncList.push({ Region: Region, StepFunc: StepFunc });
-        this.AddNewStepFuncNode(Region, StepFunc);
+        StepFuncTreeView_1.StepFuncTreeView.Current.StepFuncList.push({ Region: Region, StepFunc: StepFuncArn });
+        this.AddNewStepFuncNode(Region, StepFuncArn);
         this.Refresh();
     }
     RemoveStepFunc(Region, StepFunc) {
@@ -44,7 +44,7 @@ class StepFuncTreeDataProvider {
             now.getSeconds().toString().padStart(2, '0');
         let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem("Response - " + currentTime, StepFuncTreeItem_1.TreeItemType.ResponsePayload);
         treeItem.Region = node.Region;
-        treeItem.StepFunc = node.StepFunc;
+        treeItem.StepFuncArn = node.StepFuncArn;
         treeItem.ResponsePayload = payloadString;
         treeItem.Parent = node;
         node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
@@ -58,7 +58,7 @@ class StepFuncTreeDataProvider {
             }
             let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem(streamName, StepFuncTreeItem_1.TreeItemType.LogStream);
             treeItem.Region = node.Region;
-            treeItem.StepFunc = node.StepFunc;
+            treeItem.StepFuncArn = node.StepFuncArn;
             treeItem.LogStreamName = streamName;
             treeItem.Parent = node;
             node.Children.push(treeItem);
@@ -72,56 +72,57 @@ class StepFuncTreeDataProvider {
             this.StepFuncNodeList.push(treeItem);
         }
     }
-    AddNewStepFuncNode(Region, StepFunc) {
-        if (this.StepFuncNodeList.some(item => item.Region === Region && item.StepFunc === StepFunc)) {
+    AddNewStepFuncNode(Region, StepFuncArn) {
+        if (this.StepFuncNodeList.some(item => item.Region === Region && item.StepFuncArn === StepFuncArn)) {
             return;
         }
-        let treeItem = this.NewStepFuncNode(Region, StepFunc);
+        let treeItem = this.NewStepFuncNode(Region, StepFuncArn);
         this.StepFuncNodeList.push(treeItem);
     }
     RemoveStepFuncNode(Region, StepFunc) {
         for (var i = 0; i < this.StepFuncNodeList.length; i++) {
-            if (this.StepFuncNodeList[i].Region === Region && this.StepFuncNodeList[i].StepFunc === StepFunc) {
+            if (this.StepFuncNodeList[i].Region === Region && this.StepFuncNodeList[i].StepFuncArn === StepFunc) {
                 this.StepFuncNodeList.splice(i, 1);
                 break;
             }
         }
     }
-    NewStepFuncNode(Region, StepFunc) {
-        let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem(StepFunc, StepFuncTreeItem_1.TreeItemType.StepFunc);
+    NewStepFuncNode(Region, StepFuncArn) {
+        let StepFuncName = StepFuncTreeItem_1.StepFuncTreeItem.getStepFuncName(StepFuncArn);
+        let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem(StepFuncName, StepFuncTreeItem_1.TreeItemType.StepFunc);
         treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         treeItem.Region = Region;
-        treeItem.StepFunc = StepFunc;
+        treeItem.StepFuncArn = StepFuncArn;
         let codeItem = new StepFuncTreeItem_1.StepFuncTreeItem("Code", StepFuncTreeItem_1.TreeItemType.Code);
-        codeItem.StepFunc = treeItem.StepFunc;
+        codeItem.StepFuncArn = treeItem.StepFuncArn;
         codeItem.Region = treeItem.Region;
         codeItem.Parent = treeItem;
-        codeItem.CodePath = this.GetCodePath(treeItem.Region, treeItem.StepFunc);
+        codeItem.CodePath = this.GetCodePath(treeItem.Region, treeItem.StepFuncArn);
         treeItem.Children.push(codeItem);
         let triggerItem = new StepFuncTreeItem_1.StepFuncTreeItem("Trigger", StepFuncTreeItem_1.TreeItemType.TriggerGroup);
-        triggerItem.StepFunc = treeItem.StepFunc;
+        triggerItem.StepFuncArn = treeItem.StepFuncArn;
         triggerItem.Region = treeItem.Region;
         triggerItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         triggerItem.Parent = treeItem;
         treeItem.Children.push(triggerItem);
         let triggerWithPayload = new StepFuncTreeItem_1.StepFuncTreeItem("With Paylod", StepFuncTreeItem_1.TreeItemType.TriggerWithPayload);
-        triggerWithPayload.StepFunc = treeItem.StepFunc;
+        triggerWithPayload.StepFuncArn = treeItem.StepFuncArn;
         triggerWithPayload.Region = treeItem.Region;
         triggerWithPayload.Parent = triggerItem;
         triggerItem.Children.push(triggerWithPayload);
         let triggerWithoutPayload = new StepFuncTreeItem_1.StepFuncTreeItem("Without Paylod", StepFuncTreeItem_1.TreeItemType.TriggerNoPayload);
-        triggerWithoutPayload.StepFunc = treeItem.StepFunc;
+        triggerWithoutPayload.StepFuncArn = treeItem.StepFuncArn;
         triggerWithoutPayload.Region = treeItem.Region;
         triggerWithoutPayload.Parent = triggerItem;
         triggerItem.Children.push(triggerWithoutPayload);
         for (var i = 0; i < StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList.length; i++) {
             if (StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].Region === Region
-                && StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].StepFunc === StepFunc) {
+                && StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].StepFunc === StepFuncArn) {
                 this.AddNewPayloadPathNode(triggerItem, StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].PayloadPath);
             }
         }
         let logsItem = new StepFuncTreeItem_1.StepFuncTreeItem("Logs", StepFuncTreeItem_1.TreeItemType.LogGroup);
-        logsItem.StepFunc = treeItem.StepFunc;
+        logsItem.StepFuncArn = treeItem.StepFuncArn;
         logsItem.Region = treeItem.Region;
         logsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         logsItem.Parent = treeItem;
@@ -131,13 +132,13 @@ class StepFuncTreeDataProvider {
     AddPayloadPath(node, PayloadPath) {
         for (var i = 0; i < StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList.length; i++) {
             if (StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].Region === node.Region
-                && StepFuncTreeView_1.StepFuncTreeView.Current.CodePathList[i].StepFunc === node.StepFunc
+                && StepFuncTreeView_1.StepFuncTreeView.Current.CodePathList[i].StepFunc === node.StepFuncArn
                 && StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].PayloadPath === PayloadPath) {
                 return;
             }
         }
         this.AddNewPayloadPathNode(node, PayloadPath);
-        StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList.push({ Region: node.Region, StepFunc: node.StepFunc, PayloadPath: PayloadPath });
+        StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList.push({ Region: node.Region, StepFunc: node.StepFuncArn, PayloadPath: PayloadPath });
         this.Refresh();
     }
     AddNewPayloadPathNode(node, PayloadPath) {
@@ -147,7 +148,7 @@ class StepFuncTreeDataProvider {
         }
         let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem(fileName, StepFuncTreeItem_1.TreeItemType.TriggerFilePayload);
         treeItem.Region = node.Region;
-        treeItem.StepFunc = node.StepFunc;
+        treeItem.StepFuncArn = node.StepFuncArn;
         treeItem.PayloadPath = PayloadPath;
         treeItem.Parent = node;
         node.Children.push(treeItem);
@@ -158,7 +159,7 @@ class StepFuncTreeDataProvider {
         }
         for (var i = 0; i < StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList.length; i++) {
             if (StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].Region === node.Region
-                && StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].StepFunc === node.StepFunc
+                && StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].StepFunc === node.StepFuncArn
                 && StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList[i].PayloadPath === node.PayloadPath) {
                 StepFuncTreeView_1.StepFuncTreeView.Current.PayloadPathList.splice(i, 1);
             }
@@ -166,7 +167,7 @@ class StepFuncTreeDataProvider {
         let parentNode = node.Parent;
         for (var i = 0; i < parentNode.Children.length; i++) {
             if (parentNode.Children[i].Region === node.Region
-                && parentNode.Children[i].StepFunc === node.StepFunc
+                && parentNode.Children[i].StepFuncArn === node.StepFuncArn
                 && parentNode.Children[i].PayloadPath === node.PayloadPath) {
                 parentNode.Children.splice(i, 1);
             }

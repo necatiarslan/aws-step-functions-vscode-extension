@@ -32,7 +32,6 @@ const path_2 = require("path");
 const parseKnownFiles_1 = require("../aws-sdk/parseKnownFiles");
 const StepFuncTreeView = require("../step/StepFuncTreeView");
 const fs = require("fs");
-const archiver = require("archiver");
 async function GetCredentials() {
     let credentials;
     try {
@@ -90,7 +89,7 @@ async function GetStepFuncList(region, StepFuncName) {
                 for (const sm of res.stateMachines) {
                     const name = sm.name ?? sm.stateMachineArn ?? "";
                     if (!StepFuncName || name.includes(StepFuncName)) {
-                        result.result.push(name);
+                        result.result.push(sm.stateMachineArn ?? "");
                     }
                 }
             }
@@ -119,14 +118,15 @@ function isJsonString(jsonString) {
 function ParseJson(jsonString) {
     return JSON.parse(jsonString);
 }
-async function TriggerStepFunc(Region, StepFuncName, Parameters) {
+async function TriggerStepFunc(Region, StepFuncArn, Parameters) {
     let result = new MethodResult_1.MethodResult();
     try {
         // Start Step Functions execution
         const sfn = await GetStepFuncClient(Region);
         const input = JSON.stringify(Parameters ?? {});
+        const stateMachineArn = StepFuncArn;
         const startCmd = new client_sfn_1.StartExecutionCommand({
-            stateMachineArn: StepFuncName, // StepFuncName should be ARN or name resolved by caller
+            stateMachineArn,
             input,
         });
         const startRes = await sfn.send(startCmd);
@@ -429,17 +429,6 @@ async function ZipTextFile(inputPath, outputZipPath) {
             fs.unlinkSync(outputZipPath);
         }
         const output = fs.createWriteStream(outputZipPath);
-        const archive = archiver('zip', {
-            zlib: { level: 9 } // Set compression level
-        });
-        archive.pipe(output);
-        if (fs.lstatSync(inputPath).isDirectory()) {
-            archive.directory(inputPath, false);
-        }
-        else {
-            archive.file(inputPath, { name: (0, path_2.basename)(inputPath) });
-        }
-        archive.finalize();
         result.result = outputZipPath;
         result.isSuccessful = true;
         return result;
