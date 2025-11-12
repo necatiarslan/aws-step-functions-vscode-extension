@@ -89,11 +89,17 @@ function activate(context) {
     vscode.commands.registerCommand('StepFuncTreeView.RefreshLogs', async (node) => {
         await treeView.RefreshLogStreams(node);
     });
+    vscode.commands.registerCommand('StepFuncTreeView.RefreshExecutions', async (node) => {
+        await treeView.RefreshExecutions(node);
+    });
     vscode.commands.registerCommand('StepFuncTreeView.RemovePayloadPath', async (node) => {
         await treeView.RemovePayloadPath(node);
     });
     vscode.commands.registerCommand('StepFuncTreeView.AddPayloadPath', async (node) => {
         await treeView.AddPayloadPath(node);
+    });
+    vscode.commands.registerCommand('StepFuncTreeView.ViewExecutionDetails', async (node) => {
+        await treeView.ViewExecutionDetails(node);
     });
     ui.logToOutput('Aws StepFunc Extension activation completed');
 }

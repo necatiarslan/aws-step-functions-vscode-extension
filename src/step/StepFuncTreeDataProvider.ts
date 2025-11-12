@@ -77,6 +77,31 @@ export class StepFuncTreeDataProvider implements vscode.TreeDataProvider<StepFun
 		}
 		this.Refresh();
 	}
+
+	AddExecutions(node: StepFuncTreeItem, executions: any[]){
+		node.Children = []; // Clear existing executions
+		for(var execution of executions)
+		{
+			const executionName = execution.name || 'Unknown';
+			const status = execution.status || 'UNKNOWN';
+			const startDate = execution.startDate ? new Date(execution.startDate).toLocaleString() : '';
+			
+			let label = `${executionName} [${status}]`;
+			if(startDate) {
+				label += ` - ${startDate}`;
+			}
+			
+			let treeItem = new StepFuncTreeItem(label, TreeItemType.Execution);
+			treeItem.Region = node.Region;
+			treeItem.StepFuncArn = node.StepFuncArn;
+			treeItem.ExecutionArn = execution.executionArn;
+			treeItem.ExecutionStatus = status;
+			treeItem.Parent = node;
+			node.Children.push(treeItem);
+		}
+		this.Refresh();
+	}
+	
 	LoadStepFuncNodeList(){
 		this.StepFuncNodeList = [];
 		
@@ -155,6 +180,14 @@ export class StepFuncTreeDataProvider implements vscode.TreeDataProvider<StepFun
 		logsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 		logsItem.Parent = treeItem;
 		treeItem.Children.push(logsItem);
+
+		let executionsItem = new StepFuncTreeItem("Executions", TreeItemType.ExecutionGroup);
+		executionsItem.StepFuncArn = treeItem.StepFuncArn;
+		executionsItem.Region = treeItem.Region;
+		executionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+		executionsItem.Parent = treeItem;
+		treeItem.Children.push(executionsItem);
+		
 		return treeItem;
 	}
 

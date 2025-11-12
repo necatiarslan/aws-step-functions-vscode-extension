@@ -18,6 +18,8 @@ class StepFuncTreeItem extends vscode.TreeItem {
     codePath;
     PayloadPath;
     ExecutionArn;
+    ExecutionStatus;
+    ExecutionDetails;
     EnvironmentVariableName;
     EnvironmentVariableValue;
     IsRunning = false;
@@ -115,6 +117,14 @@ class StepFuncTreeItem extends vscode.TreeItem {
             this.iconPath = new vscode.ThemeIcon('wrench');
             this.contextValue = "EnvironmentVariable";
         }
+        else if (this.TreeItemType === TreeItemType.ExecutionGroup) {
+            this.iconPath = new vscode.ThemeIcon('list-tree');
+            this.contextValue = "ExecutionGroup";
+        }
+        else if (this.TreeItemType === TreeItemType.Execution) {
+            this.iconPath = new vscode.ThemeIcon('symbol-event');
+            this.contextValue = "Execution";
+        }
         else {
             this.iconPath = new vscode.ThemeIcon('circle-outline');
             this.contextValue = "Other";
@@ -174,5 +184,7 @@ var TreeItemType;
     TreeItemType[TreeItemType["ResponsePayload"] = 11] = "ResponsePayload";
     TreeItemType[TreeItemType["EnvironmentVariableGroup"] = 12] = "EnvironmentVariableGroup";
     TreeItemType[TreeItemType["EnvironmentVariable"] = 13] = "EnvironmentVariable";
+    TreeItemType[TreeItemType["ExecutionGroup"] = 14] = "ExecutionGroup";
+    TreeItemType[TreeItemType["Execution"] = 15] = "Execution";
 })(TreeItemType || (exports.TreeItemType = TreeItemType = {}));
 //# sourceMappingURL=StepFuncTreeItem.js.map

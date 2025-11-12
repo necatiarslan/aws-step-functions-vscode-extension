@@ -108,6 +108,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "StepFuncTreeView.RefreshExecutions",
+        "title": "Refresh Executions",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "StepFuncTreeView.ViewLog",
         "title": "View Log",
         "icon": "$(output)"
@@ -116,6 +121,11 @@
         "command": "StepFuncTreeView.ViewResponsePayload",
         "title": "View Payload",
         "icon": "$(output)"
+      },
+      {
+        "command": "StepFuncTreeView.ViewExecutionDetails",
+        "title": "View Execution Details",
+        "icon": "$(json)"
       },
       {
         "command": "StepFuncTreeView.SetCodePath",
@@ -294,6 +304,11 @@
           "group": "inline"
         },
         {
+          "command": "StepFuncTreeView.RefreshExecutions",
+          "when": "view == StepFuncTreeView && viewItem == ExecutionGroup",
+          "group": "inline"
+        },
+        {
           "command": "StepFuncTreeView.ViewLog",
           "when": "view == StepFuncTreeView && viewItem == LogStream",
           "group": "inline"
@@ -301,6 +316,11 @@
         {
           "command": "StepFuncTreeView.ViewResponsePayload",
           "when": "view == StepFuncTreeView && viewItem == ResponsePayload",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.ViewExecutionDetails",
+          "when": "view == StepFuncTreeView && viewItem == Execution",
           "group": "inline"
         }
       ]

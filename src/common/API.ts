@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import { fromIni } from "@aws-sdk/credential-provider-ini";
-import { ListStateMachinesCommand, StartExecutionCommand, DescribeStateMachineCommand, SFNClient } from "@aws-sdk/client-sfn";
+import { ListStateMachinesCommand, StartExecutionCommand, DescribeStateMachineCommand, SFNClient, ListExecutionsCommand, ExecutionListItem, DescribeExecutionCommand, DescribeExecutionCommandOutput } from "@aws-sdk/client-sfn";
 import { CloudWatchLogsClient, OutputLogEvent } from "@aws-sdk/client-cloudwatch-logs";
 import { IAMClient } from "@aws-sdk/client-iam";
 import * as ui from "./UI";
@@ -645,3 +645,64 @@ export const getCredentialsFilepath = () =>
 
 export const getConfigFilepath = () =>
   process.env[ENV_CREDENTIALS_PATH] || join(getHomeDir(), ".aws", "config");
+
+export async function GetStepFuncExecutions(
+  Region: string,
+  StepFuncArn: string,
+  maxResults: number = 10
+): Promise<MethodResult<ExecutionListItem[]>> {
+  ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
+  let result: MethodResult<ExecutionListItem[]> = new MethodResult<ExecutionListItem[]>();
+  result.result = [];
+
+  try {
+    const sfn = await GetStepFuncClient(Region);
+
+    const command = new ListExecutionsCommand({
+      stateMachineArn: StepFuncArn,
+      maxResults: maxResults,
+    });
+
+    const response = await sfn.send(command);
+
+    if (response.executions) {
+      result.result = response.executions;
+    }
+
+    result.isSuccessful = true;
+    return result;
+  } catch (error: any) {
+    result.isSuccessful = false;
+    result.error = error;
+    ui.showErrorMessage("api.GetStepFuncExecutions Error !!!", error);
+    ui.logToOutput("api.GetStepFuncExecutions Error !!!", error);
+    return result;
+  }
+}
+
+export async function GetExecutionDetails(
+  Region: string,
+  ExecutionArn: string
+): Promise<MethodResult<DescribeExecutionCommandOutput>> {
+  ui.logToOutput("Getting execution details for: " + ExecutionArn);
+  let result: MethodResult<DescribeExecutionCommandOutput> = new MethodResult<DescribeExecutionCommandOutput>();
+
+  try {
+    const sfn = await GetStepFuncClient(Region);
+
+    const command = new DescribeExecutionCommand({
+      executionArn: ExecutionArn,
+    });
+
+    const response = await sfn.send(command);
+    result.result = response;
+    result.isSuccessful = true;
+    return result;
+  } catch (error: any) {
+    result.isSuccessful = false;
+    result.error = error;
+    ui.showErrorMessage("api.GetExecutionDetails Error !!!", error);
+    ui.logToOutput("api.GetExecutionDetails Error !!!", error);
+    return result;
+  }
+}

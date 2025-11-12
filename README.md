@@ -60,6 +60,8 @@ https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 ## Todo
 - list latest executions
 - visualize definitions
+  - https://www.npmjs.com/package/@tshepomgaga/aws-sfn-graph
+  
 - show definition on the server, download local, compare local
 - show execution details (webview ?)
   - cloudwatch logs

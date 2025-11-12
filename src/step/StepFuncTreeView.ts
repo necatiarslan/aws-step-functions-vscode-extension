@@ -544,6 +544,25 @@ export class StepFuncTreeView {
 		this.SetNodeRunning(node, false);
 	}
 
+	async RefreshExecutions(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.RefreshExecutions Started');
+		if(node.IsRunning) { return; }
+		if(node.TreeItemType !== TreeItemType.ExecutionGroup) { return;}
+		this.SetNodeRunning(node, true);
+		let resultExecutions = await api.GetStepFuncExecutions(node.Region, node.StepFuncArn);
+		if(!resultExecutions.isSuccessful)
+		{
+			ui.logToOutput("api.GetStepFuncExecutions Error !!!", resultExecutions.error);
+			ui.showErrorMessage('Get StepFunc Executions Error !!!', resultExecutions.error);
+			this.SetNodeRunning(node, false);
+			return;
+		}
+		ui.logToOutput("api.GetStepFuncExecutions Success !!!");
+		this.treeDataProvider.AddExecutions(node, resultExecutions.result)
+		ui.showInfoMessage('StepFunc Executions Retrieved Successfully');
+		this.SetNodeRunning(node, false);
+	}
+
 	async RemovePayloadPath(node: StepFuncTreeItem) {
 		ui.logToOutput('StepFuncTreeView.RemovePayloadPath Started');
 		if(node.TreeItemType !== TreeItemType.TriggerFilePayload) { return;}
@@ -577,5 +596,35 @@ export class StepFuncTreeView {
 
 		ui.logToOutput(node.ExecutionArn);
 		ui.ShowTextDocument(node.ExecutionArn, "text");
+	}
+
+	async ViewExecutionDetails(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.ViewExecutionDetails Started');
+		if(node.TreeItemType !== TreeItemType.Execution) { return; }
+		if(!node.ExecutionArn){ return; }
+
+		if(node.ExecutionDetails) {
+			ui.logToOutput('Using cached execution details');
+			let jsonString = JSON.stringify(node.ExecutionDetails, null, 2);
+			ui.ShowTextDocument(jsonString, "json");
+			return;
+		}
+
+		if(node.IsRunning) { return; }
+		this.SetNodeRunning(node, true);
+
+		let result = await api.GetExecutionDetails(node.Region, node.ExecutionArn);
+		if(!result.isSuccessful)
+		{
+			ui.logToOutput("api.GetExecutionDetails Error !!!", result.error);
+			ui.showErrorMessage('Get Execution Details Error !!!', result.error);
+			this.SetNodeRunning(node, false);
+			return;
+		}
+
+		node.ExecutionDetails = result.result;
+		let jsonString = JSON.stringify(result.result, null, 2);
+		ui.ShowTextDocument(jsonString, "json");
+		this.SetNodeRunning(node, false);
 	}
 }

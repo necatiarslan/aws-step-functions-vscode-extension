@@ -65,6 +65,26 @@ class StepFuncTreeDataProvider {
         }
         this.Refresh();
     }
+    AddExecutions(node, executions) {
+        node.Children = []; // Clear existing executions
+        for (var execution of executions) {
+            const executionName = execution.name || 'Unknown';
+            const status = execution.status || 'UNKNOWN';
+            const startDate = execution.startDate ? new Date(execution.startDate).toLocaleString() : '';
+            let label = `${executionName} [${status}]`;
+            if (startDate) {
+                label += ` - ${startDate}`;
+            }
+            let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem(label, StepFuncTreeItem_1.TreeItemType.Execution);
+            treeItem.Region = node.Region;
+            treeItem.StepFuncArn = node.StepFuncArn;
+            treeItem.ExecutionArn = execution.executionArn;
+            treeItem.ExecutionStatus = status;
+            treeItem.Parent = node;
+            node.Children.push(treeItem);
+        }
+        this.Refresh();
+    }
     LoadStepFuncNodeList() {
         this.StepFuncNodeList = [];
         for (var item of StepFuncTreeView_1.StepFuncTreeView.Current.StepFuncList) {
@@ -127,6 +147,12 @@ class StepFuncTreeDataProvider {
         logsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         logsItem.Parent = treeItem;
         treeItem.Children.push(logsItem);
+        let executionsItem = new StepFuncTreeItem_1.StepFuncTreeItem("Executions", StepFuncTreeItem_1.TreeItemType.ExecutionGroup);
+        executionsItem.StepFuncArn = treeItem.StepFuncArn;
+        executionsItem.Region = treeItem.Region;
+        executionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        executionsItem.Parent = treeItem;
+        treeItem.Children.push(executionsItem);
         return treeItem;
     }
     AddPayloadPath(node, PayloadPath) {

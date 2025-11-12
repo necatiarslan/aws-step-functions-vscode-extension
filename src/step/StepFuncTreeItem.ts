@@ -16,6 +16,8 @@ export class StepFuncTreeItem extends vscode.TreeItem {
 	private codePath: string | undefined;
 	public PayloadPath: string | undefined;
 	public ExecutionArn: string | undefined;
+	public ExecutionStatus: string | undefined;
+	public ExecutionDetails: any | undefined;
 	public EnvironmentVariableName: string | undefined;
 	public EnvironmentVariableValue: string | undefined;
 	public IsRunning: boolean = false;
@@ -132,6 +134,16 @@ export class StepFuncTreeItem extends vscode.TreeItem {
 			this.iconPath = new vscode.ThemeIcon('wrench');
 			this.contextValue = "EnvironmentVariable"
 		}
+		else if(this.TreeItemType === TreeItemType.ExecutionGroup)
+		{
+			this.iconPath = new vscode.ThemeIcon('list-tree');
+			this.contextValue = "ExecutionGroup"
+		}
+		else if(this.TreeItemType === TreeItemType.Execution)
+		{
+			this.iconPath = new vscode.ThemeIcon('symbol-event');
+			this.contextValue = "Execution"
+		}
 		else
 		{
 			this.iconPath = new vscode.ThemeIcon('circle-outline');
@@ -208,5 +220,7 @@ export enum TreeItemType{
 	TriggerFilePayload= 10,
 	ResponsePayload= 11,
 	EnvironmentVariableGroup= 12,
-	EnvironmentVariable= 13
+	EnvironmentVariable= 13,
+	ExecutionGroup= 14,
+	Execution= 15
 }

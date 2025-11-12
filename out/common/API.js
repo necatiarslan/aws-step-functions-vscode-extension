@@ -21,6 +21,8 @@ exports.TestAwsCredentials = TestAwsCredentials;
 exports.TestAwsConnection = TestAwsConnection;
 exports.GetAwsProfileList = GetAwsProfileList;
 exports.getIniProfileData = getIniProfileData;
+exports.GetStepFuncExecutions = GetStepFuncExecutions;
+exports.GetExecutionDetails = GetExecutionDetails;
 /* eslint-disable @typescript-eslint/naming-convention */
 const credential_providers_1 = require("@aws-sdk/credential-providers");
 const client_sfn_1 = require("@aws-sdk/client-sfn");
@@ -534,4 +536,50 @@ const getCredentialsFilepath = () => process.env[exports.ENV_CREDENTIALS_PATH] |
 exports.getCredentialsFilepath = getCredentialsFilepath;
 const getConfigFilepath = () => process.env[exports.ENV_CREDENTIALS_PATH] || (0, path_2.join)((0, exports.getHomeDir)(), ".aws", "config");
 exports.getConfigFilepath = getConfigFilepath;
+async function GetStepFuncExecutions(Region, StepFuncArn, maxResults = 10) {
+    ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
+    let result = new MethodResult_1.MethodResult();
+    result.result = [];
+    try {
+        const sfn = await GetStepFuncClient(Region);
+        const command = new client_sfn_1.ListExecutionsCommand({
+            stateMachineArn: StepFuncArn,
+            maxResults: maxResults,
+        });
+        const response = await sfn.send(command);
+        if (response.executions) {
+            result.result = response.executions;
+        }
+        result.isSuccessful = true;
+        return result;
+    }
+    catch (error) {
+        result.isSuccessful = false;
+        result.error = error;
+        ui.showErrorMessage("api.GetStepFuncExecutions Error !!!", error);
+        ui.logToOutput("api.GetStepFuncExecutions Error !!!", error);
+        return result;
+    }
+}
+async function GetExecutionDetails(Region, ExecutionArn) {
+    ui.logToOutput("Getting execution details for: " + ExecutionArn);
+    let result = new MethodResult_1.MethodResult();
+    try {
+        const sfn = await GetStepFuncClient(Region);
+        const command = new client_sfn_1.DescribeExecutionCommand({
+            executionArn: ExecutionArn,
+        });
+        const response = await sfn.send(command);
+        result.result = response;
+        result.isSuccessful = true;
+        return result;
+    }
+    catch (error) {
+        result.isSuccessful = false;
+        result.error = error;
+        ui.showErrorMessage("api.GetExecutionDetails Error !!!", error);
+        ui.logToOutput("api.GetExecutionDetails Error !!!", error);
+        return result;
+    }
+}
 //# sourceMappingURL=API.js.map
