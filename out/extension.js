@@ -80,6 +80,9 @@ function activate(context) {
     vscode.commands.registerCommand('StepFuncTreeView.OpenCodeFile', async (node) => {
         await treeView.OpenCodeFile(node);
     });
+    vscode.commands.registerCommand('StepFuncTreeView.ViewCodeGraph', async (node) => {
+        await treeView.ViewCodeGraph(node);
+    });
     vscode.commands.registerCommand('StepFuncTreeView.ViewLog', async (node) => {
         await treeView.ViewLog(node);
     });

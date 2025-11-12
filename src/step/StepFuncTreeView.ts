@@ -5,6 +5,7 @@ import { StepFuncTreeDataProvider } from './StepFuncTreeDataProvider';
 import * as ui from '../common/UI';
 import * as api from '../common/API';
 import { CloudWatchLogView } from '../cloudwatch/CloudWatchLogView';
+import { StepFuncGraphView } from './StepFuncGraphView';
 
 export class StepFuncTreeView {
 
@@ -626,5 +627,18 @@ export class StepFuncTreeView {
 		let jsonString = JSON.stringify(result.result, null, 2);
 		ui.ShowTextDocument(jsonString, "json");
 		this.SetNodeRunning(node, false);
+	}
+
+	async ViewCodeGraph(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.ViewCodeGraph Started');
+		if(node.TreeItemType === TreeItemType.CodePath && node.Parent) { node = node.Parent;}
+		if(node.TreeItemType !== TreeItemType.Code) { return;}
+
+		if(!node.CodePath) {
+			ui.showWarningMessage('Please Set Code Path First');
+			return;
+		}
+
+		StepFuncGraphView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
 	}
 }

@@ -8,6 +8,7 @@ const StepFuncTreeDataProvider_1 = require("./StepFuncTreeDataProvider");
 const ui = require("../common/UI");
 const api = require("../common/API");
 const CloudWatchLogView_1 = require("../cloudwatch/CloudWatchLogView");
+const StepFuncGraphView_1 = require("./StepFuncGraphView");
 class StepFuncTreeView {
     static Current;
     view;
@@ -607,6 +608,20 @@ class StepFuncTreeView {
         let jsonString = JSON.stringify(result.result, null, 2);
         ui.ShowTextDocument(jsonString, "json");
         this.SetNodeRunning(node, false);
+    }
+    async ViewCodeGraph(node) {
+        ui.logToOutput('StepFuncTreeView.ViewCodeGraph Started');
+        if (node.TreeItemType === StepFuncTreeItem_1.TreeItemType.CodePath && node.Parent) {
+            node = node.Parent;
+        }
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.Code) {
+            return;
+        }
+        if (!node.CodePath) {
+            ui.showWarningMessage('Please Set Code Path First');
+            return;
+        }
+        StepFuncGraphView_1.StepFuncGraphView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
     }
 }
 exports.StepFuncTreeView = StepFuncTreeView;

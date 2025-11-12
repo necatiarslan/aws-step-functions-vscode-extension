@@ -148,6 +148,11 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "StepFuncTreeView.ViewCodeGraph",
+        "title": "View Graph",
+        "icon": "$(graph)"
+      },
+      {
         "command": "StepFuncTreeView.PrintStepFunc",
         "title": "Print StepFunc",
         "icon": "$(lightbulb)"
@@ -284,6 +289,11 @@
           "group": "inline"
         },
         {
+          "command": "StepFuncTreeView.ViewCodeGraph",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
           "command": "StepFuncTreeView.UpdateStepFuncCodes",
           "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
           "group": "inline"
@@ -374,6 +384,7 @@
     "@aws-sdk/client-sfn": "^3.888.0",
     "@aws-sdk/client-sts": "^3.888.0",
     "@aws-sdk/credential-providers": "^3.888.0",
+    "@tshepomgaga/aws-sfn-graph": "^0.0.6",
     "@vscode-elements/elements": "^2.3.1",
     "@vscode/codicons": "^0.0.40",
     "archiver": "^7.0.1",
