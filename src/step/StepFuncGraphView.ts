@@ -68,16 +68,7 @@ export class StepFuncGraphView {
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         ui.logToOutput('StepFuncGraphView._getWebviewContent Started');
 
-        // Use webview.asWebviewUri for local files so the webview can resolve them.
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "media", "style.css"));
-        // Load codicons from CDN to avoid file:// resolution issues for node_modules assets.
-        const codiconsUri = "https://unpkg.com/@vscode/codicons@0.0.26/dist/codicon.css";
-        
-        // Load AWSSfnGraph library locally instead of from CDN
-        const awsSfnGraphJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "node_modules", "@tshepomgaga", "aws-sfn-graph", "index.js"));
-        const awsSfnGraphCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "node_modules", "@tshepomgaga", "aws-sfn-graph", "index.css"));
-
-        // Escape the JSON for use in JavaScript
         const aslDataJson = JSON.stringify(this.aslDefinition);
 
         let result = /*html*/ `
@@ -87,86 +78,447 @@ export class StepFuncGraphView {
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width,initial-scale=1.0">
 		<link rel="stylesheet" href="${styleUri}">
-		<link href="${codiconsUri}" rel="stylesheet" id="vscode-codicon-stylesheet"/>
 		<title>Step Function Graph</title>
-		<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-		<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-		<script src="${awsSfnGraphJsUri}"></script>
-		<link rel="stylesheet" href="${awsSfnGraphCssUri}">
 		<style>
 			body {
 				padding: 20px;
 				overflow: auto;
-			}
-			#graph-container {
-				width: 100%;
-				height: calc(100vh - 100px);
-				min-height: 500px;
-				display: flex;
-				justify-content: center;
-				align-items: center;
+				background-color: var(--vscode-editor-background);
+				color: var(--vscode-editor-foreground);
+				font-family: var(--vscode-font-family);
 			}
 			h2 {
 				margin-bottom: 20px;
+				color: var(--vscode-foreground);
+			}
+			#graph-container {
+				width: 100%;
+				min-height: 500px;
+				display: flex;
+				justify-content: center;
+				padding: 20px;
+				overflow: auto;
+			}
+			.state-box {
+				border: 2px solid var(--vscode-button-background);
+				border-radius: 8px;
+				padding: 12px 20px;
+				margin: 10px;
+				min-width: 150px;
+				text-align: center;
+				background-color: var(--vscode-editor-background);
+				box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+			.state-box:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+				border-color: var(--vscode-button-hoverBackground);
+			}
+			.state-box.task {
+				border-color: #4A90E2;
+				background-color: rgba(74, 144, 226, 0.1);
+			}
+			.state-box.choice {
+				border-color: #F5A623;
+				background-color: rgba(245, 166, 35, 0.1);
+			}
+			.state-box.parallel {
+				border-color: #7B68EE;
+				background-color: rgba(123, 104, 238, 0.1);
+			}
+			.state-box.map {
+				border-color: #9B59B6;
+				background-color: rgba(155, 89, 182, 0.1);
+			}
+			.state-box.pass {
+				border-color: #50C878;
+				background-color: rgba(80, 200, 120, 0.1);
+			}
+			.state-box.wait {
+				border-color: #FF6B6B;
+				background-color: rgba(255, 107, 107, 0.1);
+			}
+			.state-box.succeed {
+				border-color: #2ECC71;
+				background-color: rgba(46, 204, 113, 0.1);
+			}
+			.state-box.fail {
+				border-color: #E74C3C;
+				background-color: rgba(231, 76, 60, 0.1);
+			}
+			.state-name {
+				font-weight: bold;
+				font-size: 14px;
+				margin-bottom: 5px;
+			}
+			.state-type {
+				font-size: 11px;
+				opacity: 0.8;
+				text-transform: uppercase;
+			}
+			.state-details {
+				font-size: 10px;
+				margin-top: 5px;
+				opacity: 0.7;
+			}
+			svg {
+				display: block;
+			}
+			.arrow {
+				fill: none;
+				stroke: var(--vscode-button-background);
+				stroke-width: 2;
+				marker-end: url(#arrowhead);
+			}
+			.arrow.error {
+				stroke: #E74C3C;
+				stroke-dasharray: 5,5;
+			}
+			.legend {
+				margin-top: 20px;
+				padding: 15px;
+				border: 1px solid var(--vscode-panel-border);
+				border-radius: 5px;
+				background-color: var(--vscode-editor-background);
+			}
+			.legend-title {
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.legend-items {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 15px;
+			}
+			.legend-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.legend-color {
+				width: 20px;
+				height: 20px;
+				border-radius: 3px;
+				border: 2px solid;
+			}
+			.error-message {
+				color: var(--vscode-errorForeground);
+				padding: 15px;
+				border: 1px solid var(--vscode-errorForeground);
+				border-radius: 5px;
+				margin: 20px 0;
 			}
 		</style>
 	  </head>
 	  <body>  
 		<h2>Step Function: ${this.stepFuncName}</h2>
 		<div id="graph-container"></div>
+		<div id="legend" class="legend" style="display:none;">
+			<div class="legend-title">State Types</div>
+			<div class="legend-items">
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #4A90E2; background-color: rgba(74, 144, 226, 0.1);"></div>
+					<span>Task</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #F5A623; background-color: rgba(245, 166, 35, 0.1);"></div>
+					<span>Choice</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #7B68EE; background-color: rgba(123, 104, 238, 0.1);"></div>
+					<span>Parallel</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #9B59B6; background-color: rgba(155, 89, 182, 0.1);"></div>
+					<span>Map</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #50C878; background-color: rgba(80, 200, 120, 0.1);"></div>
+					<span>Pass</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #FF6B6B; background-color: rgba(255, 107, 107, 0.1);"></div>
+					<span>Wait</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #2ECC71; background-color: rgba(46, 204, 113, 0.1);"></div>
+					<span>Succeed</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color" style="border-color: #E74C3C; background-color: rgba(231, 76, 60, 0.1);"></div>
+					<span>Fail</span>
+				</div>
+			</div>
+		</div>
 
-		<script type="text/babel">
-			const { useState, useEffect } = React;
-			// Try both possible export shapes: direct or .default
-			const AWSSfnGraph = (window.AWSSfnGraph && (window.AWSSfnGraph.default || window.AWSSfnGraph)) || null;
-
+		<script>
 			const aslData = ${aslDataJson};
 
-			function App() {
-				const [error, setError] = useState(null);
+			class StepFunctionGraph {
+				constructor(definition, containerId) {
+					this.definition = definition;
+					this.container = document.getElementById(containerId);
+					this.states = definition.States || {};
+					this.startAt = definition.StartAt;
+					this.nodePositions = new Map();
+					this.nodeWidth = 180;
+					this.nodeHeight = 80;
+					this.horizontalGap = 100;
+					this.verticalGap = 100;
+					this.layers = [];
+				}
 
-				useEffect(() => {
-					// If the library failed to load, set an explicit error instead of crashing
-					if (!AWSSfnGraph) {
-						setError("AWSSfnGraph library failed to load. Check network/CDN availability.");
+				render() {
+					try {
+						if (!this.startAt || Object.keys(this.states).length === 0) {
+							this.showError('Invalid Step Function definition: Missing StartAt or States');
+							return;
+						}
+
+						this.calculateLayout();
+						this.drawGraph();
+						document.getElementById('legend').style.display = 'block';
+					} catch (error) {
+						this.showError('Error rendering graph: ' + error.message);
+						console.error(error);
 					}
-				}, []);
+				}
 
-				const handleError = (err) => {
-					console.error('Graph rendering error:', err);
-					setError(err?.message || 'Unknown error occurred');
-				};
+				showError(message) {
+					this.container.innerHTML = '<div class="error-message">' + message + '</div>';
+				}
 
-				return (
-					<div style={{ width: '100%', height: '100%' }}>
-						{error && (
-							<div style={{ color: 'var(--vscode-errorForeground)', padding: '10px', marginBottom: '10px' }}>
-								Error rendering graph: {error}
-							</div>
-						)}
-						{!error && AWSSfnGraph && (
-							<AWSSfnGraph 
-								data={aslData} 
-								width="100%" 
-								height="100%" 
-								onError={handleError} 
-							/>
-						)}
-					</div>
-				);
-			}
+				calculateLayout() {
+					const visited = new Set();
+					const layers = [];
+					const queue = [[this.startAt, 0]];
 
-			try {
-				const root = ReactDOM.createRoot(document.getElementById('graph-container'));
-				root.render(<App />);
-			} catch (e) {
-				console.error('Render failed:', e);
-				const container = document.getElementById('graph-container');
-				if (container) {
-					container.innerHTML = '<div style="color:var(--vscode-errorForeground);padding:10px;">Failed to initialize graph renderer. Check console for details.</div>';
+					while (queue.length > 0) {
+						const [stateName, layer] = queue.shift();
+						
+						if (visited.has(stateName) || !this.states[stateName]) {
+							continue;
+						}
+
+						visited.add(stateName);
+
+						if (!layers[layer]) {
+							layers[layer] = [];
+						}
+						layers[layer].push(stateName);
+
+						const state = this.states[stateName];
+						const nextStates = this.getNextStates(state);
+						
+						for (const next of nextStates) {
+							if (!visited.has(next)) {
+								queue.push([next, layer + 1]);
+							}
+						}
+					}
+
+					this.layers = layers;
+
+					// Calculate positions
+					layers.forEach((layerStates, layerIndex) => {
+						layerStates.forEach((stateName, indexInLayer) => {
+							const x = layerIndex * (this.nodeWidth + this.horizontalGap) + this.nodeWidth / 2;
+							const totalInLayer = layerStates.length;
+							const centerOffset = (totalInLayer - 1) * (this.nodeHeight + this.verticalGap) / 2;
+							const y = indexInLayer * (this.nodeHeight + this.verticalGap) - centerOffset;
+							
+							this.nodePositions.set(stateName, { x, y });
+						});
+					});
+				}
+
+				getNextStates(state) {
+					const nexts = [];
+					
+					if (state.Next) {
+						nexts.push(state.Next);
+					}
+					
+					if (state.Type === 'Choice' && state.Choices) {
+						state.Choices.forEach(choice => {
+							if (choice.Next) {
+								nexts.push(choice.Next);
+							}
+						});
+						if (state.Default) {
+							nexts.push(state.Default);
+						}
+					}
+					
+					if (state.Catch) {
+						state.Catch.forEach(catchBlock => {
+							if (catchBlock.Next) {
+								nexts.push(catchBlock.Next);
+							}
+						});
+					}
+
+					if (state.Type === 'Parallel' && state.Branches) {
+						state.Branches.forEach(branch => {
+							if (branch.StartAt) {
+								nexts.push(branch.StartAt);
+							}
+						});
+					}
+
+					if (state.Type === 'Map' && state.Iterator && state.Iterator.StartAt) {
+						nexts.push(state.Iterator.StartAt);
+					}
+					
+					return nexts;
+				}
+
+				drawGraph() {
+					const padding = 50;
+					let minX = Infinity, maxX = -Infinity;
+					let minY = Infinity, maxY = -Infinity;
+
+					this.nodePositions.forEach((pos) => {
+						minX = Math.min(minX, pos.x - this.nodeWidth / 2);
+						maxX = Math.max(maxX, pos.x + this.nodeWidth / 2);
+						minY = Math.min(minY, pos.y - this.nodeHeight / 2);
+						maxY = Math.max(maxY, pos.y + this.nodeHeight / 2);
+					});
+
+					const width = maxX - minX + 2 * padding;
+					const height = maxY - minY + 2 * padding;
+					const offsetX = -minX + padding;
+					const offsetY = -minY + padding;
+
+					const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+					svg.setAttribute('width', width);
+					svg.setAttribute('height', height);
+
+					// Add arrow marker
+					const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+					const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+					marker.setAttribute('id', 'arrowhead');
+					marker.setAttribute('markerWidth', '10');
+					marker.setAttribute('markerHeight', '10');
+					marker.setAttribute('refX', '9');
+					marker.setAttribute('refY', '3');
+					marker.setAttribute('orient', 'auto');
+					const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+					polygon.setAttribute('points', '0 0, 10 3, 0 6');
+					polygon.setAttribute('fill', 'var(--vscode-button-background)');
+					marker.appendChild(polygon);
+					defs.appendChild(marker);
+					svg.appendChild(defs);
+
+					// Draw arrows first (so they appear behind boxes)
+					this.nodePositions.forEach((fromPos, fromState) => {
+						const state = this.states[fromState];
+						const nexts = this.getNextStates(state);
+						
+						nexts.forEach(toState => {
+							const toPos = this.nodePositions.get(toState);
+							if (toPos) {
+								this.drawArrow(svg, fromPos, toPos, offsetX, offsetY);
+							}
+						});
+					});
+
+					// Draw state boxes
+					const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+					foreignObject.setAttribute('width', width);
+					foreignObject.setAttribute('height', height);
+					
+					const div = document.createElement('div');
+					div.style.width = width + 'px';
+					div.style.height = height + 'px';
+					div.style.position = 'relative';
+
+					this.nodePositions.forEach((pos, stateName) => {
+						const stateBox = this.createStateBox(stateName, pos, offsetX, offsetY);
+						div.appendChild(stateBox);
+					});
+
+					foreignObject.appendChild(div);
+					svg.appendChild(foreignObject);
+
+					this.container.innerHTML = '';
+					this.container.appendChild(svg);
+				}
+
+				drawArrow(svg, fromPos, toPos, offsetX, offsetY) {
+					const x1 = fromPos.x + offsetX + this.nodeWidth / 2;
+					const y1 = fromPos.y + offsetY;
+					const x2 = toPos.x + offsetX - this.nodeWidth / 2;
+					const y2 = toPos.y + offsetY;
+
+					const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+					
+					const midX = (x1 + x2) / 2;
+					const pathData = 'M ' + x1 + ' ' + y1 + ' Q ' + midX + ' ' + y1 + ' ' + midX + ' ' + ((y1 + y2) / 2) + 
+									 ' T ' + x2 + ' ' + y2;
+					
+					path.setAttribute('d', pathData);
+					path.setAttribute('class', 'arrow');
+					svg.appendChild(path);
+				}
+
+				createStateBox(stateName, pos, offsetX, offsetY) {
+					const state = this.states[stateName];
+					const div = document.createElement('div');
+					
+					const x = pos.x + offsetX - this.nodeWidth / 2;
+					const y = pos.y + offsetY - this.nodeHeight / 2;
+					
+					div.className = 'state-box ' + (state.Type || 'task').toLowerCase();
+					div.style.position = 'absolute';
+					div.style.left = x + 'px';
+					div.style.top = y + 'px';
+					div.style.width = this.nodeWidth + 'px';
+					div.style.minHeight = this.nodeHeight + 'px';
+					
+					const nameDiv = document.createElement('div');
+					nameDiv.className = 'state-name';
+					nameDiv.textContent = stateName;
+					if (stateName === this.startAt) {
+						nameDiv.textContent = '▶ ' + stateName;
+					}
+					div.appendChild(nameDiv);
+					
+					const typeDiv = document.createElement('div');
+					typeDiv.className = 'state-type';
+					typeDiv.textContent = state.Type || 'Task';
+					div.appendChild(typeDiv);
+
+					if (state.Resource) {
+						const resourceDiv = document.createElement('div');
+						resourceDiv.className = 'state-details';
+						const shortResource = state.Resource.split(':').pop() || state.Resource;
+						resourceDiv.textContent = shortResource.substring(0, 20) + (shortResource.length > 20 ? '...' : '');
+						resourceDiv.title = state.Resource;
+						div.appendChild(resourceDiv);
+					}
+
+					if (state.End) {
+						const endDiv = document.createElement('div');
+						endDiv.className = 'state-details';
+						endDiv.textContent = '■ End';
+						div.appendChild(endDiv);
+					}
+
+					div.onclick = () => {
+						console.log('State:', stateName, state);
+						alert('State: ' + stateName + '\\nType: ' + state.Type + '\\n\\n' + JSON.stringify(state, null, 2));
+					};
+					
+					return div;
 				}
 			}
+
+			// Render the graph
+			const graph = new StepFunctionGraph(aslData, 'graph-container');
+			graph.render();
 		</script>
 
 		<br>
