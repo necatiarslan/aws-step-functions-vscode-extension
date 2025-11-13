@@ -58,8 +58,11 @@ https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 
 
 ## Todo  
-- show definition on the server, download local, compare local
 - show execution events 
+- fix graph view
+- add table view
+- add execution events view, state view
+- add execution input and output buttons to view
 
 ## Nice To Have
 - 
