@@ -371,7 +371,7 @@ export class StepFuncTreeView {
 		const executionArn = result.result?.executionArn;
 		if(executionArn)
 		{
-			this.treeDataProvider.AddResponsePayload(node, executionArn);
+			this.treeDataProvider.AddExecutionNode(node, executionArn);
 			ui.logToOutput("api.TriggerStepFunc executionArn \n" + executionArn);
 		}
 		else
@@ -587,7 +587,14 @@ export class StepFuncTreeView {
 		if(node.IsRunning) { return; }
 		if(node.TreeItemType !== TreeItemType.ExecutionGroup) { return;}
 		this.SetNodeRunning(node, true);
-		let resultExecutions = await api.GetStepFuncExecutions(node.StepFuncArn);
+
+		let executionName = await vscode.window.showInputBox({ placeHolder: 'Enter Execution Name / Search Text' });
+		if(executionName===undefined){ 
+			this.SetNodeRunning(node, false);
+			return; 
+		}
+
+		let resultExecutions = await api.GetStepFuncExecutions(node.StepFuncArn, executionName);
 		if(!resultExecutions.isSuccessful)
 		{
 			ui.logToOutput("api.GetStepFuncExecutions Error !!!", resultExecutions.error);

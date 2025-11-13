@@ -609,7 +609,7 @@ const getCredentialsFilepath = () => process.env[exports.ENV_CREDENTIALS_PATH] |
 exports.getCredentialsFilepath = getCredentialsFilepath;
 const getConfigFilepath = () => process.env[exports.ENV_CREDENTIALS_PATH] || (0, path_2.join)((0, exports.getHomeDir)(), ".aws", "config");
 exports.getConfigFilepath = getConfigFilepath;
-async function GetStepFuncExecutions(StepFuncArn, maxResults = 10) {
+async function GetStepFuncExecutions(StepFuncArn, ExecutionName, MaxResults = 20) {
     ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
     let result = new MethodResult_1.MethodResult();
     result.result = [];
@@ -618,11 +618,16 @@ async function GetStepFuncExecutions(StepFuncArn, maxResults = 10) {
         const sfn = await GetStepFuncClient(Region);
         const command = new client_sfn_1.ListExecutionsCommand({
             stateMachineArn: StepFuncArn,
-            maxResults: maxResults,
+            maxResults: MaxResults,
         });
         const response = await sfn.send(command);
         if (response.executions) {
-            result.result = response.executions;
+            if (ExecutionName) {
+                result.result = response.executions.filter(exec => (exec.name ?? '').includes(ExecutionName));
+            }
+            else {
+                result.result = response.executions;
+            }
         }
         result.isSuccessful = true;
         return result;

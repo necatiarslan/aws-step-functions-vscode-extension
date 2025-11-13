@@ -57,23 +57,12 @@ To report your bugs or request new features, use link below\
 https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 
 
-## Todo
-- list latest executions
-- visualize definitions
-  - https://www.npmjs.com/package/@tshepomgaga/aws-sfn-graph
-  
+## Todo  
 - show definition on the server, download local, compare local
-- show execution details (webview ?)
-  - cloudwatch logs
-  - start time, end time, duration
-  - execution type
-  - iput, output
-  - definition
-  - events 
-  - open aws console
+- show execution events 
 
 ## Nice To Have
-- Pin an execution (save execution arn)
+- 
 
 Follow me on linkedin to get latest news \
 https://www.linkedin.com/in/necati-arslan/

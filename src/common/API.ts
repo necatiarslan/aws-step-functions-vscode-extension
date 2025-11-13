@@ -197,7 +197,7 @@ export async function GetStepFuncLogGroupName(
     if (logGroupArn) {
       return extractLogGroupNameFromArn(logGroupArn);
     }
-    
+
     // // Fallback to previous convention if no loggingConfiguration is present
     // const region = GetStepFuncRegion(StepFuncArn);
     // const name = GetStepFuncName(StepFuncArn);
@@ -713,7 +713,8 @@ export const getConfigFilepath = () =>
 
 export async function GetStepFuncExecutions(
   StepFuncArn: string,
-  maxResults: number = 10
+  ExecutionName?: string,
+  MaxResults: number = 20
 ): Promise<MethodResult<ExecutionListItem[]>> {
   ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
   let result: MethodResult<ExecutionListItem[]> = new MethodResult<ExecutionListItem[]>();
@@ -724,13 +725,17 @@ export async function GetStepFuncExecutions(
 
     const command = new ListExecutionsCommand({
       stateMachineArn: StepFuncArn,
-      maxResults: maxResults,
+      maxResults: MaxResults,
     });
 
     const response = await sfn.send(command);
 
     if (response.executions) {
-      result.result = response.executions;
+      if (ExecutionName) {
+        result.result = response.executions.filter(exec => (exec.name ?? '').includes(ExecutionName));
+      } else {
+        result.result = response.executions;
+      }
     }
 
     result.isSuccessful = true;

@@ -37,18 +37,18 @@ class StepFuncTreeDataProvider {
         this.RemoveStepFuncNode(Region, StepFunc);
         this.Refresh();
     }
-    AddResponsePayload(node, payloadString) {
+    AddExecutionNode(Node, ExecutionArn) {
         let now = new Date();
         let currentTime = now.getHours().toString().padStart(2, '0') + ':' +
             now.getMinutes().toString().padStart(2, '0') + ':' +
             now.getSeconds().toString().padStart(2, '0');
-        let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem("Response - " + currentTime, StepFuncTreeItem_1.TreeItemType.ResponsePayload);
-        treeItem.Region = node.Region;
-        treeItem.StepFuncArn = node.StepFuncArn;
-        treeItem.ExecutionArn = payloadString;
-        treeItem.Parent = node;
-        node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-        node.Children.push(treeItem);
+        let treeItem = new StepFuncTreeItem_1.StepFuncTreeItem("Execution - " + currentTime, StepFuncTreeItem_1.TreeItemType.Execution);
+        treeItem.Region = Node.Region;
+        treeItem.StepFuncArn = Node.StepFuncArn;
+        treeItem.ExecutionArn = ExecutionArn;
+        treeItem.Parent = Node;
+        Node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        Node.Children.push(treeItem);
         this.Refresh();
     }
     AddLogStreams(node, LogStreams) {

@@ -47,19 +47,19 @@ export class StepFuncTreeDataProvider implements vscode.TreeDataProvider<StepFun
 		this.Refresh();
 	}
 	
-	AddResponsePayload(node: StepFuncTreeItem, payloadString: string) {
+	AddExecutionNode(Node: StepFuncTreeItem, ExecutionArn: string) {
 		let now = new Date();
 		let currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
 						now.getMinutes().toString().padStart(2, '0') + ':' + 
 						now.getSeconds().toString().padStart(2, '0');
 
-		let treeItem = new StepFuncTreeItem("Response - " + currentTime, TreeItemType.ResponsePayload);
-		treeItem.Region = node.Region;
-		treeItem.StepFuncArn = node.StepFuncArn;
-		treeItem.ExecutionArn = payloadString
-		treeItem.Parent = node
-		node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed
-		node.Children.push(treeItem)
+		let treeItem = new StepFuncTreeItem("Execution - " + currentTime, TreeItemType.Execution);
+		treeItem.Region = Node.Region;
+		treeItem.StepFuncArn = Node.StepFuncArn;
+		treeItem.ExecutionArn = ExecutionArn
+		treeItem.Parent = Node
+		Node.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed
+		Node.Children.push(treeItem)
 		this.Refresh();
 	}
 
