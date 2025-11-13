@@ -10,6 +10,7 @@ class StepFuncTreeItem extends vscode.TreeItem {
     StepFuncArn = "";
     StepFuncName = "";
     Region = "";
+    StepFuncDefinition;
     LogStreamName;
     Parent;
     Children = [];

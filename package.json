@@ -128,6 +128,11 @@
         "icon": "$(json)"
       },
       {
+        "command": "StepFuncTreeView.ViewExecutionLog",
+        "title": "View Execution Log",
+        "icon": "$(output)"
+      },
+      {
         "command": "StepFuncTreeView.SetCodePath",
         "title": "Set Code Path",
         "icon": "$(folder-library)"
@@ -330,6 +335,11 @@
         },
         {
           "command": "StepFuncTreeView.ViewExecutionDetails",
+          "when": "view == StepFuncTreeView && viewItem == Execution",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.ViewExecutionLog",
           "when": "view == StepFuncTreeView && viewItem == Execution",
           "group": "inline"
         }

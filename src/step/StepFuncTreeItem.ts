@@ -8,6 +8,7 @@ export class StepFuncTreeItem extends vscode.TreeItem {
 	public StepFuncArn:string = ""
 	public StepFuncName:string = ""
 	public Region:string = ""
+	public StepFuncDefinition: any | undefined;
 	public LogStreamName:string | undefined
 	public Parent:StepFuncTreeItem | undefined
 	public Children:StepFuncTreeItem[] = []

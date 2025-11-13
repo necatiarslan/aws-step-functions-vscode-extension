@@ -68,95 +68,119 @@ export class StepFuncGraphView {
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         ui.logToOutput('StepFuncGraphView._getWebviewContent Started');
 
-        const styleUri = ui.getUri(webview, extensionUri, ["media", "style.css"]);
-        const codiconsUri = ui.getUri(webview, extensionUri, ["node_modules", "@vscode", "codicons", "dist", "codicon.css"]);
+        // Use webview.asWebviewUri for local files so the webview can resolve them.
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "media", "style.css"));
+        // Load codicons from CDN to avoid file:// resolution issues for node_modules assets.
+        const codiconsUri = "https://unpkg.com/@vscode/codicons@0.0.26/dist/codicon.css";
+        
+        // Load AWSSfnGraph library locally instead of from CDN
+        const awsSfnGraphJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "node_modules", "@tshepomgaga", "aws-sfn-graph", "index.js"));
+        const awsSfnGraphCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "node_modules", "@tshepomgaga", "aws-sfn-graph", "index.css"));
 
         // Escape the JSON for use in JavaScript
         const aslDataJson = JSON.stringify(this.aslDefinition);
 
         let result = /*html*/ `
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <link rel="stylesheet" href="${styleUri}">
-        <link href="${codiconsUri}" rel="stylesheet" id="vscode-codicon-stylesheet"/>
-        <title>Step Function Graph</title>
-        <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-        <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-        <script src="https://unpkg.com/@tshepomgaga/aws-sfn-graph@0.0.6/dist/index.js"></script>
-        <link rel="stylesheet" href="https://unpkg.com/@tshepomgaga/aws-sfn-graph@0.0.6/dist/index.css">
-        <style>
-            body {
-                padding: 20px;
-                overflow: auto;
-            }
-            #graph-container {
-                width: 100%;
-                height: calc(100vh - 100px);
-                min-height: 500px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            h2 {
-                margin-bottom: 20px;
-            }
-        </style>
-      </head>
-      <body>  
-        <h2>Step Function: ${this.stepFuncName}</h2>
-        <div id="graph-container"></div>
+	<!DOCTYPE html>
+	<html lang="en">
+	  <head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0">
+		<link rel="stylesheet" href="${styleUri}">
+		<link href="${codiconsUri}" rel="stylesheet" id="vscode-codicon-stylesheet"/>
+		<title>Step Function Graph</title>
+		<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+		<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+		<script src="${awsSfnGraphJsUri}"></script>
+		<link rel="stylesheet" href="${awsSfnGraphCssUri}">
+		<style>
+			body {
+				padding: 20px;
+				overflow: auto;
+			}
+			#graph-container {
+				width: 100%;
+				height: calc(100vh - 100px);
+				min-height: 500px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			h2 {
+				margin-bottom: 20px;
+			}
+		</style>
+	  </head>
+	  <body>  
+		<h2>Step Function: ${this.stepFuncName}</h2>
+		<div id="graph-container"></div>
 
-        <script type="text/babel">
-            const { useState, useEffect } = React;
-            const AWSSfnGraph = window.AWSSfnGraph.default;
+		<script type="text/babel">
+			const { useState, useEffect } = React;
+			// Try both possible export shapes: direct or .default
+			const AWSSfnGraph = (window.AWSSfnGraph && (window.AWSSfnGraph.default || window.AWSSfnGraph)) || null;
 
-            const aslData = ${aslDataJson};
+			const aslData = ${aslDataJson};
 
-            function App() {
-                const [error, setError] = useState(null);
+			function App() {
+				const [error, setError] = useState(null);
 
-                const handleError = (err) => {
-                    console.error('Graph rendering error:', err);
-                    setError(err?.message || 'Unknown error occurred');
-                };
+				useEffect(() => {
+					// If the library failed to load, set an explicit error instead of crashing
+					if (!AWSSfnGraph) {
+						setError("AWSSfnGraph library failed to load. Check network/CDN availability.");
+					}
+				}, []);
 
-                return (
-                    <div style={{ width: '100%', height: '100%' }}>
-                        {error && (
-                            <div style={{ color: 'var(--vscode-errorForeground)', padding: '10px', marginBottom: '10px' }}>
-                                Error rendering graph: {error}
-                            </div>
-                        )}
-                        <AWSSfnGraph 
-                            data={aslData} 
-                            width={800} 
-                            height={600} 
-                            onError={handleError} 
-                        />
-                    </div>
-                );
-            }
+				const handleError = (err) => {
+					console.error('Graph rendering error:', err);
+					setError(err?.message || 'Unknown error occurred');
+				};
 
-            const root = ReactDOM.createRoot(document.getElementById('graph-container'));
-            root.render(<App />);
-        </script>
+				return (
+					<div style={{ width: '100%', height: '100%' }}>
+						{error && (
+							<div style={{ color: 'var(--vscode-errorForeground)', padding: '10px', marginBottom: '10px' }}>
+								Error rendering graph: {error}
+							</div>
+						)}
+						{!error && AWSSfnGraph && (
+							<AWSSfnGraph 
+								data={aslData} 
+								width="100%" 
+								height="100%" 
+								onError={handleError} 
+							/>
+						)}
+					</div>
+				);
+			}
 
-        <br>
-        <br>
-        <table>
-            <tr>
-                <td>
-                    <a href="https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new">Bug Report & Feature Request</a>
-                </td>
-            </tr>
-        </table>
-      </body>
-    </html>
-    `;
+			try {
+				const root = ReactDOM.createRoot(document.getElementById('graph-container'));
+				root.render(<App />);
+			} catch (e) {
+				console.error('Render failed:', e);
+				const container = document.getElementById('graph-container');
+				if (container) {
+					container.innerHTML = '<div style="color:var(--vscode-errorForeground);padding:10px;">Failed to initialize graph renderer. Check console for details.</div>';
+				}
+			}
+		</script>
+
+		<br>
+		<br>
+		<table>
+			<tr>
+				<td>
+					<a href="https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new">Bug Report & Feature Request</a>
+				</td>
+			</tr>
+		</table>
+	  </body>
+	</html>
+	`;
         ui.logToOutput('StepFuncGraphView._getWebviewContent Completed');
         return result;
     }

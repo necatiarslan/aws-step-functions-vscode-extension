@@ -14,6 +14,8 @@ import { ParsedIniData } from "@aws-sdk/types";
 import * as StepFuncTreeView from '../step/StepFuncTreeView';
 import * as fs from 'fs';
 
+// add a simple in-memory cache for DescribeStateMachine responses
+const stateMachineCache: Map<string, any> = new Map();
 
 export async function GetCredentials() {
   let credentials;
@@ -117,12 +119,11 @@ export function ParseJson(jsonString: string) {
 
 import { StartExecutionCommandOutput } from "@aws-sdk/client-sfn";
 export async function TriggerStepFunc(
-  Region: string,
   StepFuncArn: string,
   Parameters: { [key: string]: any }
 ): Promise<MethodResult<StartExecutionCommandOutput>> {
   let result: MethodResult<StartExecutionCommandOutput> = new MethodResult<StartExecutionCommandOutput>();
-
+  let Region = GetStepFuncRegion(StepFuncArn);
   try {
     // Start Step Functions execution
     const sfn = await GetStepFuncClient(Region);
@@ -151,16 +152,84 @@ import {
   GetLogEventsCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
 
+// Utility to extract log group name from arn
+function extractLogGroupNameFromArn(arn: string): string | null {
+  try {
+    // arn:partition:service:region:account-id:resource-type:resource
+    // CloudWatch log group ARNs are like: arn:aws:logs:region:account-id:log-group:my-log-group
+    const parts = arn.split(':');
+    // parts[5] should be "log-group", parts[6] the name (may include colons or slashes)
+    if (parts.length >= 7) {
+      return parts.slice(6).join(':');
+    }
+    return null;
+  } catch (e) {
+    ui.logToOutput("extractLogGroupNameFromArn error");
+    return null;
+  }
+}
+
+export async function GetStepFuncLogGroupArn(
+  StepFuncArn: string
+): Promise<string | null> {
+  try {
+    const describeResult = await GetStepFuncDescription(StepFuncArn);
+    if (describeResult.isSuccessful && describeResult.result) {
+      const loggingConfig = (describeResult.result as any).loggingConfiguration;
+      if (loggingConfig?.enabled && loggingConfig.destinations?.length) {
+        const cw = loggingConfig.destinations.find((d: any) => d.cloudWatchLogsLogGroup);
+        return cw?.cloudWatchLogsLogGroup?.logGroupArn ?? null;
+      }
+    }
+  } catch (error: any) {
+    ui.logToOutput("GetStepFuncLogGroupArn error", error);
+  }
+  return null;
+}
+
+// Replace old synchronous function with async implementation that uses the state machine definition
+export async function GetStepFuncLogGroupName(
+  StepFuncArn: string
+): Promise<string | null> {
+
+  try {
+    const logGroupArn = await GetStepFuncLogGroupArn(StepFuncArn);
+    if (logGroupArn) {
+      return extractLogGroupNameFromArn(logGroupArn);
+    }
+    
+    // // Fallback to previous convention if no loggingConfiguration is present
+    // const region = GetStepFuncRegion(StepFuncArn);
+    // const name = GetStepFuncName(StepFuncArn);
+    // if (region && name) {
+    //   return `/aws/vendedlogs/states/${region}/${name}`;
+    // }
+
+    return null;
+  } catch (error: any) {
+    ui.logToOutput("GetStepFuncLogGroupName error", error);
+    return null;
+  }
+}
+
 export async function GetLatestStepFuncLogStreamName(
-  Region: string,
   StepFuncArn: string
 ): Promise<MethodResult<string>> {
   ui.logToOutput("GetLatestStepFuncLogStreamName for StepFunc function: " + StepFuncArn);
   let result: MethodResult<string> = new MethodResult<string>();
 
+  let Region = GetStepFuncRegion(StepFuncArn);
+
   try {
     // Get the log group name
-    const logGroupName = GetStepFuncLogGroupName(StepFuncArn);
+    const logGroupName = await GetStepFuncLogGroupName(StepFuncArn);
+    if (!logGroupName) {
+      result.isSuccessful = false;
+      result.error = new Error("No log group found for this state machine.");
+      ui.showErrorMessage("No log group found for this state machine.", result.error);
+      ui.logToOutput("No log group found for this state machine.");
+      return result;
+    }
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -203,10 +272,6 @@ export async function GetLatestStepFuncLogStreamName(
   }
 }
 
-export function GetStepFuncLogGroupName(StepFuncArn: string) {
-  return `/aws/vendedlogs/states/${GetStepFuncRegion(StepFuncArn)}/${GetStepFuncName(StepFuncArn)}`;
-}
-
 export function GetStepFuncName(stepFuncArn: string): string {
   if(stepFuncArn)
   {
@@ -226,15 +291,21 @@ export function GetStepFuncRegion(stepFuncArn: string): string {
 }
 
 export async function GetLatestStepFuncLogs(
-  Region: string,
   StepFunc: string
 ): Promise<MethodResult<string>> {
   ui.logToOutput("Getting logs for StepFunc function: " + StepFunc);
   let result: MethodResult<string> = new MethodResult<string>();
-
+  let Region = GetStepFuncRegion(StepFunc);
   try {
     // Get the log group name
-    const logGroupName = GetStepFuncLogGroupName(StepFunc);
+    const logGroupName = await GetStepFuncLogGroupName(StepFunc);
+    if (!logGroupName) {
+      result.isSuccessful = false;
+      result.error = new Error("No log group found for this state machine.");
+      ui.showErrorMessage("No log group found for this state machine.", result.error);
+      ui.logToOutput("No log group found for this state machine.");
+      return result;
+    }
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -300,16 +371,22 @@ export async function GetLatestStepFuncLogs(
 }
 
 export async function GetLatestStepFuncLogStreams(
-  Region: string,
   StepFunc: string
 ): Promise<MethodResult<string[]>> {
   ui.logToOutput("Getting log streams for StepFunc function: " + StepFunc);
   let result: MethodResult<string[]> = new MethodResult<string[]>();
   result.result = [];
-
+  let Region = GetStepFuncRegion(StepFunc);
   try {
     // Get the log group name
-    const logGroupName = GetStepFuncLogGroupName(StepFunc);
+    const logGroupName = await GetStepFuncLogGroupName(StepFunc);
+    if (!logGroupName) {
+      result.isSuccessful = false;
+      result.error = new Error("No log group found for this state machine.");
+      ui.showErrorMessage("No log group found for this state machine.", result.error);
+      ui.logToOutput("No log group found for this state machine.");
+      return result;
+    }
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     // Get the streams sorted by the latest event time
@@ -348,7 +425,14 @@ export async function GetStepFuncLogs(
 
   try {
     // Get the log group name
-    const logGroupName = GetStepFuncLogGroupName(StepFunc);
+    const logGroupName = await GetStepFuncLogGroupName(StepFunc);
+    if (!logGroupName) {
+      result.isSuccessful = false;
+      result.error = new Error("No log group found for this state machine.");
+      ui.showErrorMessage("No log group found for this state machine.", result.error);
+      ui.logToOutput("No log group found for this state machine.");
+      return result;
+    }
     const cloudwatchlogs = await GetCloudWatchClient(Region);
 
     const getLogEventsCommand = new GetLogEventsCommand({
@@ -427,20 +511,30 @@ export async function GetLogEvents(
 
 import { DescribeStateMachineCommandOutput } from "@aws-sdk/client-sfn";
 
-export async function GetStepFunc(
-  Region: string,
-  StepFuncName: string
+export async function GetStepFuncDescription(
+  StepFuncArn: string
 ): Promise<MethodResult<DescribeStateMachineCommandOutput>> {
   let result: MethodResult<DescribeStateMachineCommandOutput> = new MethodResult<DescribeStateMachineCommandOutput>();
-
+  let Region = GetStepFuncRegion(StepFuncArn);
   try {
+    // Return cached value if present
+    if (stateMachineCache.has(StepFuncArn)) {
+      ui.logToOutput(`GetStepFunc: returning cached state machine for ${StepFuncArn}`);
+      result.result = stateMachineCache.get(StepFuncArn);
+      result.isSuccessful = true;
+      return result;
+    }
+
     const stepFunc = await GetStepFuncClient(Region);
 
     const command = new DescribeStateMachineCommand({
-      stateMachineArn: StepFuncName,
+      stateMachineArn: StepFuncArn,
     });
 
     const response = await stepFunc.send(command);
+    // Cache the response for future calls
+    stateMachineCache.set(StepFuncArn, response);
+
     result.result = response;
     result.isSuccessful = true;
     return result;
@@ -453,51 +547,22 @@ export async function GetStepFunc(
   }
 }
 
-// import { GetFunctionConfigurationCommand, GetFunctionConfigurationCommandOutput } from "@aws-sdk/client-stepFunc";
-
-// export async function GetStepFuncConfiguration(
-//   Region: string,
-//   StepFuncName: string
-// ): Promise<MethodResult<GetFunctionConfigurationCommandOutput>> {
-//   let result: MethodResult<GetFunctionConfigurationCommandOutput> = new MethodResult<GetFunctionConfigurationCommandOutput>();
-
-//   try {
-//     const stepFunc = await GetStepFuncClient(Region);
-
-//     const command = new GetFunctionConfigurationCommand({
-//       FunctionName: StepFuncName,
-//     });
-
-//     const response = await stepFunc.send(command);
-//     result.result = response;
-//     result.isSuccessful = true;
-//     return result;
-//   } catch (error: any) {
-//     result.isSuccessful = false;
-//     result.error = error;
-//     ui.showErrorMessage("api.GetStepFuncConfiguration Error !!!", error);
-//     ui.logToOutput("api.GetStepFuncConfiguration Error !!!", error);
-//     return result;
-//   }
-// }
-
 import { UpdateStateMachineCommand, UpdateStateMachineCommandOutput } from "@aws-sdk/client-sfn";
 
 export async function UpdateStepFuncCode(
-  Region: string,
-  StepFuncName: string,
+  StepFuncArn: string,
   CodeFilePath: string
 ): Promise<MethodResult<UpdateStateMachineCommandOutput>> {
   let result: MethodResult<UpdateStateMachineCommandOutput> =
     new MethodResult<UpdateStateMachineCommandOutput>();
-
+  let Region = GetStepFuncRegion(StepFuncArn);
   try {
     const stepFunc = await GetStepFuncClient(Region);
 
     const definition = fs.readFileSync(CodeFilePath, "utf8");
 
     const command = new UpdateStateMachineCommand({
-      stateMachineArn: StepFuncName,
+      stateMachineArn: StepFuncArn,
       definition: definition,
     });
 
@@ -647,14 +712,13 @@ export const getConfigFilepath = () =>
   process.env[ENV_CREDENTIALS_PATH] || join(getHomeDir(), ".aws", "config");
 
 export async function GetStepFuncExecutions(
-  Region: string,
   StepFuncArn: string,
   maxResults: number = 10
 ): Promise<MethodResult<ExecutionListItem[]>> {
   ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
   let result: MethodResult<ExecutionListItem[]> = new MethodResult<ExecutionListItem[]>();
   result.result = [];
-
+  let Region = GetStepFuncRegion(StepFuncArn);
   try {
     const sfn = await GetStepFuncClient(Region);
 

@@ -327,7 +327,7 @@ class StepFuncTreeView {
                 param = api.ParseJson(config);
             }
         }
-        let result = await api.TriggerStepFunc(node.Region, node.StepFuncArn, param);
+        let result = await api.TriggerStepFunc(node.StepFuncArn, param);
         if (!result.isSuccessful) {
             ui.logToOutput("api.TriggerStepFunc Error !!!", result.error);
             ui.showErrorMessage('Trigger StepFunc Error !!!', result.error);
@@ -356,18 +356,26 @@ class StepFuncTreeView {
         if (node.IsRunning) {
             return;
         }
-        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.StepFunc) {
+        let logGroupArn = await api.GetStepFuncLogGroupArn(node.StepFuncArn);
+        if (!logGroupArn) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
+            this.SetNodeRunning(node, false);
             return;
         }
         this.SetNodeRunning(node, true);
-        let resultLogStream = await api.GetLatestStepFuncLogStreamName(node.Region, node.StepFuncArn);
+        const logGroupName = await api.GetStepFuncLogGroupName(node.StepFuncArn);
+        if (!logGroupName) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        let resultLogStream = await api.GetLatestStepFuncLogStreamName(node.StepFuncArn);
         if (!resultLogStream.isSuccessful) {
             ui.logToOutput("api.GetLatestStepFuncLogStreamName Error !!!", resultLogStream.error);
             ui.showErrorMessage('Get StepFunc LogStream Error !!!', resultLogStream.error);
             this.SetNodeRunning(node, false);
             return;
         }
-        const logGroupName = api.GetStepFuncLogGroupName(node.StepFuncArn);
         CloudWatchLogView_1.CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, resultLogStream.result);
         this.SetNodeRunning(node, false);
     }
@@ -405,7 +413,7 @@ class StepFuncTreeView {
         if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.StepFunc) {
             return;
         }
-        let result = await api.GetStepFunc(node.Region, node.StepFuncArn);
+        let result = await api.GetStepFuncDescription(node.StepFuncArn);
         if (!result.isSuccessful) {
             ui.logToOutput("api.GetStepFunc Error !!!", result.error);
             ui.showErrorMessage('Get StepFunc Error !!!', result.error);
@@ -431,7 +439,7 @@ class StepFuncTreeView {
             this.SetNodeRunning(node, false);
             return;
         }
-        let result = await api.UpdateStepFuncCode(node.Region, node.StepFuncArn, node.CodePath);
+        let result = await api.UpdateStepFuncCode(node.StepFuncArn, node.CodePath);
         if (!result.isSuccessful) {
             ui.logToOutput("api.UpdateStepFuncCode Error !!!", result.error);
             ui.showErrorMessage('Update StepFunc Code Error !!!', result.error);
@@ -491,14 +499,23 @@ class StepFuncTreeView {
     }
     async ViewLog(node) {
         ui.logToOutput('StepFuncTreeView.ViewLog Started');
-        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.LogStream) {
+        let logGroupArn = await api.GetStepFuncLogGroupArn(node.StepFuncArn);
+        if (!logGroupArn) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
+            this.SetNodeRunning(node, false);
             return;
         }
-        if (!node.LogStreamName) {
+        const logGroupName = await api.GetStepFuncLogGroupName(node.StepFuncArn);
+        if (!logGroupName) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
             return;
         }
-        const logGroupName = api.GetStepFuncLogGroupName(node.StepFuncArn);
-        CloudWatchLogView_1.CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, node.LogStreamName);
+        const logStreamNameResponse = await api.GetLatestStepFuncLogStreamName(node.StepFuncArn);
+        if (!logStreamNameResponse.isSuccessful) {
+            ui.showWarningMessage('Log Stream not found for this Step Function');
+            return;
+        }
+        CloudWatchLogView_1.CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, logStreamNameResponse.result);
     }
     async RefreshLogStreams(node) {
         ui.logToOutput('StepFuncTreeView.RefreshLogs Started');
@@ -509,7 +526,13 @@ class StepFuncTreeView {
             return;
         }
         this.SetNodeRunning(node, true);
-        let resultLogs = await api.GetLatestStepFuncLogStreams(node.Region, node.StepFuncArn);
+        let logGroupArn = await api.GetStepFuncLogGroupArn(node.StepFuncArn);
+        if (!logGroupArn) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        let resultLogs = await api.GetLatestStepFuncLogStreams(node.StepFuncArn);
         if (!resultLogs.isSuccessful) {
             ui.logToOutput("api.GetLatestStepFuncLogStreams Error !!!", resultLogs.error);
             ui.showErrorMessage('Get StepFunc Logs Error !!!', resultLogs.error);
@@ -530,7 +553,7 @@ class StepFuncTreeView {
             return;
         }
         this.SetNodeRunning(node, true);
-        let resultExecutions = await api.GetStepFuncExecutions(node.Region, node.StepFuncArn);
+        let resultExecutions = await api.GetStepFuncExecutions(node.StepFuncArn);
         if (!resultExecutions.isSuccessful) {
             ui.logToOutput("api.GetStepFuncExecutions Error !!!", resultExecutions.error);
             ui.showErrorMessage('Get StepFunc Executions Error !!!', resultExecutions.error);
@@ -608,6 +631,30 @@ class StepFuncTreeView {
         let jsonString = JSON.stringify(result.result, null, 2);
         ui.ShowTextDocument(jsonString, "json");
         this.SetNodeRunning(node, false);
+    }
+    async ViewExecutionLog(node) {
+        ui.logToOutput('StepFuncTreeView.ViewExecutionLog Started');
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.Execution) {
+            return;
+        }
+        if (!node.ExecutionArn) {
+            return;
+        }
+        // Extract execution name from execution ARN
+        // Format: arn:aws:states:region:account-id:execution:stateMachineName:executionName
+        const arnParts = node.ExecutionArn.split(':');
+        const executionName = arnParts[arnParts.length - 1];
+        let logGroupArn = await api.GetStepFuncLogGroupArn(node.StepFuncArn);
+        if (!logGroupArn) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
+            return;
+        }
+        const logGroupName = await api.GetStepFuncLogGroupName(node.StepFuncArn);
+        if (!logGroupName) {
+            ui.showWarningMessage('Log Group not found for this Step Function');
+            return;
+        }
+        CloudWatchLogView_1.CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, executionName);
     }
     async ViewCodeGraph(node) {
         ui.logToOutput('StepFuncTreeView.ViewCodeGraph Started');
