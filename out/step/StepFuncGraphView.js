@@ -69,39 +69,73 @@ class StepFuncGraphView {
 		<title>Step Function Graph</title>
 		<style>
 			body {
-				padding: 20px;
-				overflow: auto;
+				padding: 0;
+				margin: 0;
+				overflow: hidden;
 				background-color: var(--vscode-editor-background);
 				color: var(--vscode-editor-foreground);
 				font-family: var(--vscode-font-family);
 			}
+			#header {
+				padding: 15px 20px;
+				background-color: var(--vscode-editor-background);
+				border-bottom: 1px solid var(--vscode-panel-border);
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
 			h2 {
-				margin-bottom: 20px;
+				margin: 0;
 				color: var(--vscode-foreground);
+				font-size: 16px;
+			}
+			.zoom-controls {
+				display: flex;
+				gap: 5px;
+			}
+			.zoom-btn {
+				background-color: var(--vscode-button-background);
+				color: var(--vscode-button-foreground);
+				border: none;
+				padding: 5px 12px;
+				border-radius: 3px;
+				cursor: pointer;
+				font-size: 14px;
+				transition: background-color 0.2s;
+			}
+			.zoom-btn:hover {
+				background-color: var(--vscode-button-hoverBackground);
+			}
+			#graph-wrapper {
+				width: 100%;
+				height: calc(100vh - 120px);
+				overflow: auto;
+				position: relative;
 			}
 			#graph-container {
 				width: 100%;
-				min-height: 500px;
+				height: 100%;
 				display: flex;
 				justify-content: center;
+				align-items: flex-start;
 				padding: 20px;
-				overflow: auto;
+				transform-origin: top left;
 			}
 			.state-box {
 				border: 2px solid var(--vscode-button-background);
-				border-radius: 8px;
-				padding: 12px 20px;
-				margin: 10px;
-				min-width: 150px;
+				border-radius: 6px;
+				padding: 8px 12px;
+				margin: 5px;
+				min-width: 100px;
 				text-align: center;
 				background-color: var(--vscode-editor-background);
-				box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+				box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 				cursor: pointer;
 				transition: all 0.2s;
 			}
 			.state-box:hover {
 				transform: translateY(-2px);
-				box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+				box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 				border-color: var(--vscode-button-hoverBackground);
 			}
 			.state-box.task {
@@ -138,17 +172,17 @@ class StepFuncGraphView {
 			}
 			.state-name {
 				font-weight: bold;
-				font-size: 14px;
-				margin-bottom: 5px;
+				font-size: 12px;
+				margin-bottom: 3px;
 			}
 			.state-type {
-				font-size: 11px;
+				font-size: 9px;
 				opacity: 0.8;
 				text-transform: uppercase;
 			}
 			.state-details {
-				font-size: 10px;
-				margin-top: 5px;
+				font-size: 8px;
+				margin-top: 3px;
 				opacity: 0.7;
 			}
 			svg {
@@ -201,8 +235,17 @@ class StepFuncGraphView {
 		</style>
 	  </head>
 	  <body>  
-		<h2>Step Function: ${this.stepFuncName}</h2>
-		<div id="graph-container"></div>
+		<div id="header">
+			<h2>Step Function: ${this.stepFuncName}</h2>
+			<div class="zoom-controls">
+				<button class="zoom-btn" onclick="zoomIn()">+</button>
+				<button class="zoom-btn" onclick="zoomOut()">−</button>
+				<button class="zoom-btn" onclick="resetZoom()">Reset</button>
+			</div>
+		</div>
+		<div id="graph-wrapper">
+			<div id="graph-container"></div>
+		</div>
 		<div id="legend" class="legend" style="display:none;">
 			<div class="legend-title">State Types</div>
 			<div class="legend-items">
@@ -243,6 +286,27 @@ class StepFuncGraphView {
 
 		<script>
 			const aslData = ${aslDataJson};
+			let currentZoom = 1;
+
+			function zoomIn() {
+				currentZoom = Math.min(currentZoom + 0.2, 3);
+				applyZoom();
+			}
+
+			function zoomOut() {
+				currentZoom = Math.max(currentZoom - 0.2, 0.3);
+				applyZoom();
+			}
+
+			function resetZoom() {
+				currentZoom = 1;
+				applyZoom();
+			}
+
+			function applyZoom() {
+				const container = document.getElementById('graph-container');
+				container.style.transform = 'scale(' + currentZoom + ')';
+			}
 
 			class StepFunctionGraph {
 				constructor(definition, containerId) {
@@ -251,10 +315,10 @@ class StepFuncGraphView {
 					this.states = definition.States || {};
 					this.startAt = definition.StartAt;
 					this.nodePositions = new Map();
-					this.nodeWidth = 180;
-					this.nodeHeight = 80;
-					this.horizontalGap = 100;
-					this.verticalGap = 100;
+					this.nodeWidth = 120;
+					this.nodeHeight = 60;
+					this.horizontalGap = 60;
+					this.verticalGap = 80;
 					this.layers = [];
 				}
 
@@ -309,13 +373,13 @@ class StepFuncGraphView {
 
 					this.layers = layers;
 
-					// Calculate positions
+					// Calculate positions (top to bottom layout)
 					layers.forEach((layerStates, layerIndex) => {
 						layerStates.forEach((stateName, indexInLayer) => {
-							const x = layerIndex * (this.nodeWidth + this.horizontalGap) + this.nodeWidth / 2;
 							const totalInLayer = layerStates.length;
-							const centerOffset = (totalInLayer - 1) * (this.nodeHeight + this.verticalGap) / 2;
-							const y = indexInLayer * (this.nodeHeight + this.verticalGap) - centerOffset;
+							const centerOffset = (totalInLayer - 1) * (this.nodeWidth + this.horizontalGap) / 2;
+							const x = indexInLayer * (this.nodeWidth + this.horizontalGap) - centerOffset;
+							const y = layerIndex * (this.nodeHeight + this.verticalGap) + this.nodeHeight / 2;
 							
 							this.nodePositions.set(stateName, { x, y });
 						});
@@ -436,15 +500,15 @@ class StepFuncGraphView {
 				}
 
 				drawArrow(svg, fromPos, toPos, offsetX, offsetY) {
-					const x1 = fromPos.x + offsetX + this.nodeWidth / 2;
-					const y1 = fromPos.y + offsetY;
-					const x2 = toPos.x + offsetX - this.nodeWidth / 2;
-					const y2 = toPos.y + offsetY;
+					const x1 = fromPos.x + offsetX;
+					const y1 = fromPos.y + offsetY + this.nodeHeight / 2;
+					const x2 = toPos.x + offsetX;
+					const y2 = toPos.y + offsetY - this.nodeHeight / 2;
 
 					const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 					
-					const midX = (x1 + x2) / 2;
-					const pathData = 'M ' + x1 + ' ' + y1 + ' Q ' + midX + ' ' + y1 + ' ' + midX + ' ' + ((y1 + y2) / 2) + 
+					const midY = (y1 + y2) / 2;
+					const pathData = 'M ' + x1 + ' ' + y1 + ' Q ' + x1 + ' ' + midY + ' ' + ((x1 + x2) / 2) + ' ' + midY + 
 									 ' T ' + x2 + ' ' + y2;
 					
 					path.setAttribute('d', pathData);
