@@ -159,7 +159,12 @@ function extractLogGroupNameFromArn(arn) {
         const parts = arn.split(':');
         // parts[5] should be "log-group", parts[6] the name (may include colons or slashes)
         if (parts.length >= 7) {
-            return parts.slice(6).join(':');
+            let result = parts.slice(6).join(':');
+            ui.logToOutput("extractLogGroupNameFromArn: " + result);
+            return result;
+        }
+        else {
+            ui.logToOutput("extractLogGroupNameFromArn: Invalid ARN format");
         }
         return null;
     }
@@ -175,7 +180,12 @@ async function GetStepFuncLogGroupArn(StepFuncArn) {
             const loggingConfig = describeResult.result.loggingConfiguration;
             if (loggingConfig?.enabled && loggingConfig.destinations?.length) {
                 const cw = loggingConfig.destinations.find((d) => d.cloudWatchLogsLogGroup);
-                return cw?.cloudWatchLogsLogGroup?.logGroupArn ?? null;
+                let logGroupArn = cw?.cloudWatchLogsLogGroup?.logGroupArn ?? null;
+                ui.logToOutput("GetStepFuncLogGroupArn: " + logGroupArn);
+                return logGroupArn;
+            }
+            else {
+                ui.logToOutput("GetStepFuncLogGroupArn: No logging configuration found.");
             }
         }
     }
