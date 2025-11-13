@@ -231,14 +231,14 @@ export class CloudWatchLogView {
 
         <table>
             <tr>
-                <td style="text-align:left">
+                <td style="text-align:left; vertical-align: middle;">
                     <vscode-single-select id="logstream_combo" combobox>
                         ${logStreamComboOptions}
                     </vscode-single-select>
                     <vscode-button id="refresh" >Refresh</vscode-button>
                     <vscode-button id="export_logs" >Export</vscode-button>
                 </td>
-                <td style="text-align:right">
+                <td style="text-align:right; vertical-align: middle;">
                     <vscode-textfield id="search_text" placeholder="Search" value="${this.SearchText}" style="width: 20ch; margin: 0;" >
                         <vscode-icon slot="content-before" name="search" title="search"></vscode-icon>
                     </vscode-textfield>
