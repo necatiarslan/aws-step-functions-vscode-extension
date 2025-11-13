@@ -187,6 +187,27 @@ export class StepFuncTreeDataProvider implements vscode.TreeDataProvider<StepFun
 		executionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 		executionsItem.Parent = treeItem;
 		treeItem.Children.push(executionsItem);
+
+		let runningExecutionsItem = new StepFuncTreeItem("Running Executions", TreeItemType.RunningExecutionGroup);
+		runningExecutionsItem.StepFuncArn = treeItem.StepFuncArn;
+		runningExecutionsItem.Region = treeItem.Region;
+		runningExecutionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+		runningExecutionsItem.Parent = treeItem;
+		treeItem.Children.push(runningExecutionsItem);
+
+		let successfulExecutionsItem = new StepFuncTreeItem("Successful Executions", TreeItemType.SuccessfulExecutionGroup);
+		successfulExecutionsItem.StepFuncArn = treeItem.StepFuncArn;
+		successfulExecutionsItem.Region = treeItem.Region;
+		successfulExecutionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+		successfulExecutionsItem.Parent = treeItem;
+		treeItem.Children.push(successfulExecutionsItem);
+
+		let failedExecutionsItem = new StepFuncTreeItem("Failed Executions", TreeItemType.FailedExecutionGroup);
+		failedExecutionsItem.StepFuncArn = treeItem.StepFuncArn;
+		failedExecutionsItem.Region = treeItem.Region;
+		failedExecutionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+		failedExecutionsItem.Parent = treeItem;
+		treeItem.Children.push(failedExecutionsItem);
 		
 		return treeItem;
 	}

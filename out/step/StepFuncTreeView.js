@@ -570,6 +570,84 @@ class StepFuncTreeView {
         ui.showInfoMessage('StepFunc Executions Retrieved Successfully');
         this.SetNodeRunning(node, false);
     }
+    async RefreshSuccessfulExecutions(node) {
+        ui.logToOutput('StepFuncTreeView.RefreshSuccessfulExecutions Started');
+        if (node.IsRunning) {
+            return;
+        }
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.SuccessfulExecutionGroup) {
+            return;
+        }
+        this.SetNodeRunning(node, true);
+        let executionName = await vscode.window.showInputBox({ placeHolder: 'Enter Execution Name / Search Text' });
+        if (executionName === undefined) {
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        let resultExecutions = await api.GetStepFuncExecutions(node.StepFuncArn, executionName, 20, 'SUCCEEDED');
+        if (!resultExecutions.isSuccessful) {
+            ui.logToOutput("api.GetStepFuncExecutions Error !!!", resultExecutions.error);
+            ui.showErrorMessage('Get Successful Executions Error !!!', resultExecutions.error);
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        ui.logToOutput("api.GetStepFuncExecutions Success !!!");
+        this.treeDataProvider.AddExecutions(node, resultExecutions.result);
+        ui.showInfoMessage('Successful Executions Retrieved Successfully');
+        this.SetNodeRunning(node, false);
+    }
+    async RefreshFailedExecutions(node) {
+        ui.logToOutput('StepFuncTreeView.RefreshFailedExecutions Started');
+        if (node.IsRunning) {
+            return;
+        }
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.FailedExecutionGroup) {
+            return;
+        }
+        this.SetNodeRunning(node, true);
+        let executionName = await vscode.window.showInputBox({ placeHolder: 'Enter Execution Name / Search Text' });
+        if (executionName === undefined) {
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        let resultExecutions = await api.GetStepFuncExecutions(node.StepFuncArn, executionName, 20, 'FAILED');
+        if (!resultExecutions.isSuccessful) {
+            ui.logToOutput("api.GetStepFuncExecutions Error !!!", resultExecutions.error);
+            ui.showErrorMessage('Get Failed Executions Error !!!', resultExecutions.error);
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        ui.logToOutput("api.GetStepFuncExecutions Success !!!");
+        this.treeDataProvider.AddExecutions(node, resultExecutions.result);
+        ui.showInfoMessage('Failed Executions Retrieved Successfully');
+        this.SetNodeRunning(node, false);
+    }
+    async RefreshRunningExecutions(node) {
+        ui.logToOutput('StepFuncTreeView.RefreshRunningExecutions Started');
+        if (node.IsRunning) {
+            return;
+        }
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.RunningExecutionGroup) {
+            return;
+        }
+        this.SetNodeRunning(node, true);
+        let executionName = await vscode.window.showInputBox({ placeHolder: 'Enter Execution Name / Search Text' });
+        if (executionName === undefined) {
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        let resultExecutions = await api.GetStepFuncExecutions(node.StepFuncArn, executionName, 20, 'RUNNING');
+        if (!resultExecutions.isSuccessful) {
+            ui.logToOutput("api.GetStepFuncExecutions Error !!!", resultExecutions.error);
+            ui.showErrorMessage('Get Running Executions Error !!!', resultExecutions.error);
+            this.SetNodeRunning(node, false);
+            return;
+        }
+        ui.logToOutput("api.GetStepFuncExecutions Success !!!");
+        this.treeDataProvider.AddExecutions(node, resultExecutions.result);
+        ui.showInfoMessage('Running Executions Retrieved Successfully');
+        this.SetNodeRunning(node, false);
+    }
     async RemovePayloadPath(node) {
         ui.logToOutput('StepFuncTreeView.RemovePayloadPath Started');
         if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.TriggerFilePayload) {

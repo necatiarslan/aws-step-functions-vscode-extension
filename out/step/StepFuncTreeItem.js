@@ -126,6 +126,18 @@ class StepFuncTreeItem extends vscode.TreeItem {
             this.iconPath = new vscode.ThemeIcon('symbol-event');
             this.contextValue = "Execution";
         }
+        else if (this.TreeItemType === TreeItemType.SuccessfulExecutionGroup) {
+            this.iconPath = new vscode.ThemeIcon('pass');
+            this.contextValue = "SuccessfulExecutionGroup";
+        }
+        else if (this.TreeItemType === TreeItemType.FailedExecutionGroup) {
+            this.iconPath = new vscode.ThemeIcon('error');
+            this.contextValue = "FailedExecutionGroup";
+        }
+        else if (this.TreeItemType === TreeItemType.RunningExecutionGroup) {
+            this.iconPath = new vscode.ThemeIcon('sync~spin');
+            this.contextValue = "RunningExecutionGroup";
+        }
         else {
             this.iconPath = new vscode.ThemeIcon('circle-outline');
             this.contextValue = "Other";
@@ -187,5 +199,8 @@ var TreeItemType;
     TreeItemType[TreeItemType["EnvironmentVariable"] = 13] = "EnvironmentVariable";
     TreeItemType[TreeItemType["ExecutionGroup"] = 14] = "ExecutionGroup";
     TreeItemType[TreeItemType["Execution"] = 15] = "Execution";
+    TreeItemType[TreeItemType["SuccessfulExecutionGroup"] = 16] = "SuccessfulExecutionGroup";
+    TreeItemType[TreeItemType["FailedExecutionGroup"] = 17] = "FailedExecutionGroup";
+    TreeItemType[TreeItemType["RunningExecutionGroup"] = 18] = "RunningExecutionGroup";
 })(TreeItemType || (exports.TreeItemType = TreeItemType = {}));
 //# sourceMappingURL=StepFuncTreeItem.js.map

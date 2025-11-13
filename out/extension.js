@@ -95,6 +95,15 @@ function activate(context) {
     vscode.commands.registerCommand('StepFuncTreeView.RefreshExecutions', async (node) => {
         await treeView.RefreshExecutions(node);
     });
+    vscode.commands.registerCommand('StepFuncTreeView.RefreshSuccessfulExecutions', async (node) => {
+        await treeView.RefreshSuccessfulExecutions(node);
+    });
+    vscode.commands.registerCommand('StepFuncTreeView.RefreshFailedExecutions', async (node) => {
+        await treeView.RefreshFailedExecutions(node);
+    });
+    vscode.commands.registerCommand('StepFuncTreeView.RefreshRunningExecutions', async (node) => {
+        await treeView.RefreshRunningExecutions(node);
+    });
     vscode.commands.registerCommand('StepFuncTreeView.RemovePayloadPath', async (node) => {
         await treeView.RemovePayloadPath(node);
     });

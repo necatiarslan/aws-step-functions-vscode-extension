@@ -153,6 +153,24 @@ class StepFuncTreeDataProvider {
         executionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         executionsItem.Parent = treeItem;
         treeItem.Children.push(executionsItem);
+        let runningExecutionsItem = new StepFuncTreeItem_1.StepFuncTreeItem("Running Executions", StepFuncTreeItem_1.TreeItemType.RunningExecutionGroup);
+        runningExecutionsItem.StepFuncArn = treeItem.StepFuncArn;
+        runningExecutionsItem.Region = treeItem.Region;
+        runningExecutionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        runningExecutionsItem.Parent = treeItem;
+        treeItem.Children.push(runningExecutionsItem);
+        let successfulExecutionsItem = new StepFuncTreeItem_1.StepFuncTreeItem("Successful Executions", StepFuncTreeItem_1.TreeItemType.SuccessfulExecutionGroup);
+        successfulExecutionsItem.StepFuncArn = treeItem.StepFuncArn;
+        successfulExecutionsItem.Region = treeItem.Region;
+        successfulExecutionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        successfulExecutionsItem.Parent = treeItem;
+        treeItem.Children.push(successfulExecutionsItem);
+        let failedExecutionsItem = new StepFuncTreeItem_1.StepFuncTreeItem("Failed Executions", StepFuncTreeItem_1.TreeItemType.FailedExecutionGroup);
+        failedExecutionsItem.StepFuncArn = treeItem.StepFuncArn;
+        failedExecutionsItem.Region = treeItem.Region;
+        failedExecutionsItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        failedExecutionsItem.Parent = treeItem;
+        treeItem.Children.push(failedExecutionsItem);
         return treeItem;
     }
     AddPayloadPath(node, PayloadPath) {

@@ -124,6 +124,18 @@ export function activate(context: vscode.ExtensionContext) {
 		await treeView.RefreshExecutions(node);
 	});
 
+	vscode.commands.registerCommand('StepFuncTreeView.RefreshSuccessfulExecutions', async (node: StepFuncTreeItem) => {
+		await treeView.RefreshSuccessfulExecutions(node);
+	});
+
+	vscode.commands.registerCommand('StepFuncTreeView.RefreshFailedExecutions', async (node: StepFuncTreeItem) => {
+		await treeView.RefreshFailedExecutions(node);
+	});
+
+	vscode.commands.registerCommand('StepFuncTreeView.RefreshRunningExecutions', async (node: StepFuncTreeItem) => {
+		await treeView.RefreshRunningExecutions(node);
+	});
+
 	vscode.commands.registerCommand('StepFuncTreeView.RemovePayloadPath', async (node: StepFuncTreeItem) => {
 		await treeView.RemovePayloadPath(node);
 	});

@@ -714,7 +714,8 @@ export const getConfigFilepath = () =>
 export async function GetStepFuncExecutions(
   StepFuncArn: string,
   ExecutionName?: string,
-  MaxResults: number = 20
+  MaxResults: number = 20,
+  StatusFilter?: string
 ): Promise<MethodResult<ExecutionListItem[]>> {
   ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
   let result: MethodResult<ExecutionListItem[]> = new MethodResult<ExecutionListItem[]>();
@@ -726,6 +727,7 @@ export async function GetStepFuncExecutions(
     const command = new ListExecutionsCommand({
       stateMachineArn: StepFuncArn,
       maxResults: MaxResults,
+      statusFilter: StatusFilter as any,
     });
 
     const response = await sfn.send(command);

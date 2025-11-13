@@ -145,6 +145,21 @@ export class StepFuncTreeItem extends vscode.TreeItem {
 			this.iconPath = new vscode.ThemeIcon('symbol-event');
 			this.contextValue = "Execution"
 		}
+		else if(this.TreeItemType === TreeItemType.SuccessfulExecutionGroup)
+		{
+			this.iconPath = new vscode.ThemeIcon('pass');
+			this.contextValue = "SuccessfulExecutionGroup"
+		}
+		else if(this.TreeItemType === TreeItemType.FailedExecutionGroup)
+		{
+			this.iconPath = new vscode.ThemeIcon('error');
+			this.contextValue = "FailedExecutionGroup"
+		}
+		else if(this.TreeItemType === TreeItemType.RunningExecutionGroup)
+		{
+			this.iconPath = new vscode.ThemeIcon('sync~spin');
+			this.contextValue = "RunningExecutionGroup"
+		}
 		else
 		{
 			this.iconPath = new vscode.ThemeIcon('circle-outline');
@@ -223,5 +238,8 @@ export enum TreeItemType{
 	EnvironmentVariableGroup= 12,
 	EnvironmentVariable= 13,
 	ExecutionGroup= 14,
-	Execution= 15
+	Execution= 15,
+	SuccessfulExecutionGroup= 16,
+	FailedExecutionGroup= 17,
+	RunningExecutionGroup= 18
 }

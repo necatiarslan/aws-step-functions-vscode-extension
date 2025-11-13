@@ -113,6 +113,21 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "StepFuncTreeView.RefreshRunningExecutions",
+        "title": "Refresh Running Executions",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "StepFuncTreeView.RefreshSuccessfulExecutions",
+        "title": "Refresh Successful Executions",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "StepFuncTreeView.RefreshFailedExecutions",
+        "title": "Refresh Failed Executions",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "StepFuncTreeView.ViewLog",
         "title": "View Log",
         "icon": "$(output)"
@@ -321,6 +336,21 @@
         {
           "command": "StepFuncTreeView.RefreshExecutions",
           "when": "view == StepFuncTreeView && viewItem == ExecutionGroup",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.RefreshRunningExecutions",
+          "when": "view == StepFuncTreeView && viewItem == RunningExecutionGroup",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.RefreshSuccessfulExecutions",
+          "when": "view == StepFuncTreeView && viewItem == SuccessfulExecutionGroup",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.RefreshFailedExecutions",
+          "when": "view == StepFuncTreeView && viewItem == FailedExecutionGroup",
           "group": "inline"
         },
         {
