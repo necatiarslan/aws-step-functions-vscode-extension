@@ -152,7 +152,7 @@ export class StepFuncTreeView {
 	}
 
 	async SetViewTitle(){
-		this.view.title = "Aws StepFunc";
+		//this.view.title = "Aws StepFunc";
 	}
 
 	SaveState() {
