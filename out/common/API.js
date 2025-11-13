@@ -155,11 +155,12 @@ const client_cloudwatch_logs_2 = require("@aws-sdk/client-cloudwatch-logs");
 function extractLogGroupNameFromArn(arn) {
     try {
         // arn:partition:service:region:account-id:resource-type:resource
-        // CloudWatch log group ARNs are like: arn:aws:logs:region:account-id:log-group:my-log-group
+        // CloudWatch log group ARNs are like: arn:aws:logs:region:account-id:log-group:my-log-group:*
+        //example arn:aws:logs:us-east-1:123456789012:log-group:/aws/vendedlogs/states/us-east-1/MyStateMachine:*
         const parts = arn.split(':');
         // parts[5] should be "log-group", parts[6] the name (may include colons or slashes)
         if (parts.length >= 7) {
-            let result = parts.slice(6).join(':');
+            let result = parts[6];
             ui.logToOutput("extractLogGroupNameFromArn: " + result);
             return result;
         }
