@@ -13,6 +13,7 @@ class CloudWatchLogView {
     Region;
     LogGroup;
     LogStream;
+    LogStreamList = [];
     StartTime = 0;
     LogEvents = [];
     FilterText = "";
@@ -29,8 +30,16 @@ class CloudWatchLogView {
         this._panel.onDidDispose(this.dispose, null, this._disposables);
         this._setWebviewMessageListener(this._panel.webview);
         this.LoadLogs();
-        //TODO: this.StartTimer();
+        this.LoadLogStreamList();
         ui.logToOutput('CloudWatchLogView.constructor Completed');
+    }
+    async LoadLogStreamList() {
+        ui.logToOutput('CloudWatchLogView.LoadLogStreamList Started');
+        let logStreams = await api.GetLatestLogGroupLogStreamList(this.Region, this.LogGroup);
+        if (logStreams.isSuccessful) {
+            this.LogStreamList = logStreams.result;
+        }
+        ui.logToOutput('CloudWatchLogView.GetLogStreamList Completed');
     }
     async RenderHtml() {
         ui.logToOutput('CloudWatchLogView.RenderHmtl Started');
@@ -129,6 +138,15 @@ class CloudWatchLogView {
         const mainUri = ui.getUri(webview, extensionUri, ["media", "main.js"]);
         const styleUri = ui.getUri(webview, extensionUri, ["media", "style.css"]);
         const codiconsUri = ui.getUri(webview, extensionUri, ["node_modules", "@vscode", "codicons", "dist", "codicon.css"]);
+        let logStreamComboOptions = "";
+        for (var logStreamName of this.LogStreamList) {
+            if (logStreamName === this.LogStream) {
+                logStreamComboOptions += `<vscode-option selected>${logStreamName}</vscode-option>`;
+            }
+            else {
+                logStreamComboOptions += `<vscode-option>${logStreamName}</vscode-option>`;
+            }
+        }
         let logRowHtml = "";
         if (this.LogEvents && this.LogEvents.length > 0) {
             let rowNumber = 0;
@@ -172,6 +190,9 @@ class CloudWatchLogView {
         <table>
             <tr>
                 <td style="text-align:left">
+                    <vscode-single-select id="logstream_combo" combobox>
+                        ${logStreamComboOptions}
+                    </vscode-single-select>
                     <vscode-button id="refresh" >Refresh</vscode-button>
                     <vscode-button id="export_logs" >Export</vscode-button>
                 </td>
@@ -249,8 +270,8 @@ class CloudWatchLogView {
                     this.FilterText = message.filter_text;
                     this.HideText = message.hide_text;
                     this.SearchText = message.search_text;
+                    this.LogStream = message.log_stream;
                     this.LoadLogs();
-                    ;
                     this.RenderHtml();
                     return;
                 case "pause_timer":

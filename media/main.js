@@ -27,11 +27,14 @@ function RefreshButtonClick() {
   const SearchTextBox = document.getElementById("search_text");
   const FilterTextBox = document.getElementById("filter_text");
   const HideTextBox = document.getElementById("hide_text");
+  const SelectedLogStreamCombo = document.getElementById("logstream_combo");
+  const selectedLogStream = SelectedLogStreamCombo.value;
   vscode.postMessage({
     command: "refresh",
     filter_text: FilterTextBox._value,
     hide_text: HideTextBox._value,
-    search_text: SearchTextBox._value
+    search_text: SearchTextBox._value,
+    log_stream: selectedLogStream
   });
 }
 

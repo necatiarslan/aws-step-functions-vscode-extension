@@ -224,6 +224,42 @@ export async function GetStepFuncLogGroupName(
   }
 }
 
+export async function GetLatestLogGroupLogStreamList(
+  Region: string,
+  LogGroupName: string
+): Promise<MethodResult<string[]>> {
+  let result: MethodResult<string[]> = new MethodResult<string[]>();
+  result.result = [];
+
+  try {
+    const cloudwatchlogs = await GetCloudWatchClient(Region);
+
+    // Get the streams sorted by the latest event time
+    const describeLogStreamsCommand = new DescribeLogStreamsCommand({
+      logGroupName: LogGroupName,
+      orderBy: "LastEventTime",
+      descending: true,
+      limit: 30,
+    });
+
+    const streamsResponse = await cloudwatchlogs.send(describeLogStreamsCommand);
+
+    if (!streamsResponse.logStreams || streamsResponse.logStreams.length === 0) {
+      return result;
+    }
+
+    result.result = streamsResponse.logStreams.map(stream => stream.logStreamName || 'invalid log stream');
+    result.isSuccessful = true;
+    return result;
+  } catch (error: any) {
+    result.isSuccessful = false;
+    result.error = error;
+    ui.showErrorMessage("api.GetLatestStepFuncLogStreamName Error !!!", error);
+    ui.logToOutput("api.GetLatestStepFuncLogStreamName Error !!!", error);
+    return result;
+  }
+}
+
 export async function GetLatestStepFuncLogStreamName(
   StepFuncArn: string
 ): Promise<MethodResult<string>> {

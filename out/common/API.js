@@ -8,6 +8,7 @@ exports.ParseJson = ParseJson;
 exports.TriggerStepFunc = TriggerStepFunc;
 exports.GetStepFuncLogGroupArn = GetStepFuncLogGroupArn;
 exports.GetStepFuncLogGroupName = GetStepFuncLogGroupName;
+exports.GetLatestLogGroupLogStreamList = GetLatestLogGroupLogStreamList;
 exports.GetLatestStepFuncLogStreamName = GetLatestStepFuncLogStreamName;
 exports.GetStepFuncName = GetStepFuncName;
 exports.GetStepFuncRegion = GetStepFuncRegion;
@@ -214,6 +215,34 @@ async function GetStepFuncLogGroupName(StepFuncArn) {
     catch (error) {
         ui.logToOutput("GetStepFuncLogGroupName error", error);
         return null;
+    }
+}
+async function GetLatestLogGroupLogStreamList(Region, LogGroupName) {
+    let result = new MethodResult_1.MethodResult();
+    result.result = [];
+    try {
+        const cloudwatchlogs = await GetCloudWatchClient(Region);
+        // Get the streams sorted by the latest event time
+        const describeLogStreamsCommand = new client_cloudwatch_logs_2.DescribeLogStreamsCommand({
+            logGroupName: LogGroupName,
+            orderBy: "LastEventTime",
+            descending: true,
+            limit: 30,
+        });
+        const streamsResponse = await cloudwatchlogs.send(describeLogStreamsCommand);
+        if (!streamsResponse.logStreams || streamsResponse.logStreams.length === 0) {
+            return result;
+        }
+        result.result = streamsResponse.logStreams.map(stream => stream.logStreamName || 'invalid log stream');
+        result.isSuccessful = true;
+        return result;
+    }
+    catch (error) {
+        result.isSuccessful = false;
+        result.error = error;
+        ui.showErrorMessage("api.GetLatestStepFuncLogStreamName Error !!!", error);
+        ui.logToOutput("api.GetLatestStepFuncLogStreamName Error !!!", error);
+        return result;
     }
 }
 async function GetLatestStepFuncLogStreamName(StepFuncArn) {

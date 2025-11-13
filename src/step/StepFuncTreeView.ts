@@ -981,7 +981,12 @@ export class StepFuncTreeView {
 			ui.showWarningMessage('Log Group not found for this Step Function');
 			return;
 		}
-		CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, executionName);
+		let logStreamName = await api.GetLatestStepFuncLogStreamName(node.StepFuncArn);
+		if(!logStreamName.isSuccessful) {
+			ui.showWarningMessage('Log Stream not found for this Step Function');
+			return;
+		}
+		CloudWatchLogView.Render(this.context.extensionUri, node.Region, logGroupName, logStreamName.result);
 	}
 
 	async ViewCodeGraph(node: StepFuncTreeItem) {
