@@ -168,6 +168,16 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "StepFuncTreeView.DownloadDefinitionFromAWS",
+        "title": "Download Definition from AWS",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "StepFuncTreeView.CompareLocalWithAWS",
+        "title": "Compare Local with AWS",
+        "icon": "$(diff)"
+      },
+      {
         "command": "StepFuncTreeView.ViewCodeGraph",
         "title": "View Graph",
         "icon": "$(graph)"
@@ -305,6 +315,16 @@
         },
         {
           "command": "StepFuncTreeView.OpenCodeFile",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.DownloadDefinitionFromAWS",
+          "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.CompareLocalWithAWS",
           "when": "view == StepFuncTreeView && (viewItem == Code || viewItem == CodePath)",
           "group": "inline"
         },

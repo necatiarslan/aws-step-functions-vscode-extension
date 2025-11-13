@@ -530,6 +530,215 @@ export class StepFuncTreeView {
 		ui.openFile(node.CodePath!);
 	}
 
+	async DownloadDefinitionFromAWS(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.DownloadDefinitionFromAWS Started');
+		if(node.TreeItemType === TreeItemType.CodePath && node.Parent) { node = node.Parent;}
+		if(node.TreeItemType !== TreeItemType.Code) { return;}
+		if(node.IsRunning) { return; }
+		
+		this.SetNodeRunning(node, true);
+
+		try {
+			// Get the step function definition from AWS
+			let result = await api.GetStepFuncDescription(node.StepFuncArn);
+			if(!result.isSuccessful || !result.result)
+			{
+				ui.logToOutput("api.GetStepFuncDescription Error !!!", result.error);
+				ui.showErrorMessage('Get StepFunc Description Error !!!', result.error);
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Extract the definition
+			const definition = result.result.definition;
+			if(!definition) {
+				ui.showWarningMessage('No definition found in Step Function response');
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Parse and pretty-print the JSON
+			let definitionJson: string;
+			try {
+				const parsed = JSON.parse(definition);
+				definitionJson = JSON.stringify(parsed, null, 2);
+			} catch (e) {
+				definitionJson = definition;
+			}
+
+			// Prompt user for save location
+			const stepFuncName = node.StepFuncName || 'stepfunction';
+			const defaultFileName = `${stepFuncName}.asl.json`;
+			
+			// Get workspace root path if available
+			let defaultUri: vscode.Uri;
+			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+				// Use the first workspace folder as default path
+				const workspaceRoot = vscode.workspace.workspaceFolders[0].uri;
+				defaultUri = vscode.Uri.joinPath(workspaceRoot, defaultFileName);
+			} else {
+				// Fallback to just the filename if no workspace is open
+				defaultUri = vscode.Uri.file(defaultFileName);
+			}
+			
+			const saveUri = await vscode.window.showSaveDialog({
+				defaultUri: defaultUri,
+				filters: {
+					'JSON Files': ['json'],
+					'All Files': ['*']
+				},
+				saveLabel: 'Save Definition'
+			});
+
+			if(!saveUri) {
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Write the file
+			const fs = require('fs');
+			fs.writeFileSync(saveUri.fsPath, definitionJson, 'utf8');
+
+			// Set as code path
+			node.CodePath = saveUri.fsPath;
+			this.treeDataProvider.AddCodePath(node.Region, node.StepFuncArn, saveUri.fsPath);
+			this.SaveState();
+
+			ui.logToOutput("Definition downloaded and saved to: " + saveUri.fsPath);
+			ui.showInfoMessage('Definition Downloaded and Code Path Set Successfully');
+			
+			// Optionally open the file
+			const openFile = await vscode.window.showQuickPick(['Yes', 'No'], {
+				placeHolder: 'Open the downloaded file?'
+			});
+			
+			if(openFile === 'Yes') {
+				ui.openFile(saveUri.fsPath);
+			}
+
+		} catch (error: any) {
+			ui.logToOutput("StepFuncTreeView.DownloadDefinitionFromAWS Error !!!", error);
+			ui.showErrorMessage('Download Definition Error !!!', error);
+		} finally {
+			this.SetNodeRunning(node, false);
+		}
+	}
+
+	async CompareLocalWithAWS(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.CompareLocalWithAWS Started');
+		if(node.TreeItemType === TreeItemType.CodePath && node.Parent) { node = node.Parent;}
+		if(node.TreeItemType !== TreeItemType.Code) { return;}
+		if(node.IsRunning) { return; }
+		
+		if(!node.CodePath) {
+			ui.showWarningMessage('Please set code path first');
+			return;
+		}
+
+		this.SetNodeRunning(node, true);
+
+		try {
+			// Read local file
+			const fs = require('fs');
+			let localContent: string;
+			try {
+				localContent = fs.readFileSync(node.CodePath, 'utf8');
+			} catch (error: any) {
+				ui.showErrorMessage('Failed to read local file', error);
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Get the step function definition from AWS
+			let result = await api.GetStepFuncDescription(node.StepFuncArn);
+			if(!result.isSuccessful || !result.result)
+			{
+				ui.logToOutput("api.GetStepFuncDescription Error !!!", result.error);
+				ui.showErrorMessage('Get StepFunc Description Error !!!', result.error);
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Extract the AWS definition
+			const awsDefinition = result.result.definition;
+			if(!awsDefinition) {
+				ui.showWarningMessage('No definition found in Step Function response');
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Normalize both JSONs for comparison (parse and stringify to remove formatting differences)
+			let localJson: any;
+			let awsJson: any;
+			
+			try {
+				localJson = JSON.parse(localContent);
+			} catch (error: any) {
+				ui.showErrorMessage('Local file is not valid JSON', error);
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			try {
+				awsJson = JSON.parse(awsDefinition);
+			} catch (error: any) {
+				ui.showErrorMessage('AWS definition is not valid JSON', error);
+				this.SetNodeRunning(node, false);
+				return;
+			}
+
+			// Compare normalized JSON strings
+			const localNormalized = JSON.stringify(localJson, Object.keys(localJson).sort(), 2);
+			const awsNormalized = JSON.stringify(awsJson, Object.keys(awsJson).sort(), 2);
+
+			const isIdentical = localNormalized === awsNormalized;
+
+			if(isIdentical) {
+				ui.logToOutput('Local file and AWS definition are identical');
+				const action = await vscode.window.showInformationMessage(
+					'✓ Local file and AWS definition are identical',
+					'OK'
+				);
+			} else {
+				ui.logToOutput('Local file and AWS definition are different');
+				const action = await vscode.window.showWarningMessage(
+					'⚠ Local file and AWS definition are different',
+					'Show Diff',
+					'Cancel'
+				);
+
+				if(action === 'Show Diff') {
+					// Create temp file for AWS definition
+					const os = require('os');
+					const path = require('path');
+					const tempDir = os.tmpdir();
+					const tempFileName = `${node.StepFuncName || 'stepfunction'}-aws.asl.json`;
+					const tempFilePath = path.join(tempDir, tempFileName);
+					
+					// Write AWS definition to temp file with formatting
+					const awsFormatted = JSON.stringify(awsJson, null, 2);
+					fs.writeFileSync(tempFilePath, awsFormatted, 'utf8');
+
+					// Open diff editor
+					const localUri = vscode.Uri.file(node.CodePath);
+					const awsUri = vscode.Uri.file(tempFilePath);
+					
+					await vscode.commands.executeCommand('vscode.diff', 
+						awsUri, 
+						localUri, 
+						`AWS ↔ Local: ${node.StepFuncName || 'Step Function'}`
+					);
+				}
+			}
+
+		} catch (error: any) {
+			ui.logToOutput("StepFuncTreeView.CompareLocalWithAWS Error !!!", error);
+			ui.showErrorMessage('Compare Error !!!', error);
+		} finally {
+			this.SetNodeRunning(node, false);
+		}
+	}
+
 	async ViewLog(node: StepFuncTreeItem) {
 		ui.logToOutput('StepFuncTreeView.ViewLog Started');
 

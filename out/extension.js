@@ -80,6 +80,12 @@ function activate(context) {
     vscode.commands.registerCommand('StepFuncTreeView.OpenCodeFile', async (node) => {
         await treeView.OpenCodeFile(node);
     });
+    vscode.commands.registerCommand('StepFuncTreeView.DownloadDefinitionFromAWS', async (node) => {
+        await treeView.DownloadDefinitionFromAWS(node);
+    });
+    vscode.commands.registerCommand('StepFuncTreeView.CompareLocalWithAWS', async (node) => {
+        await treeView.CompareLocalWithAWS(node);
+    });
     vscode.commands.registerCommand('StepFuncTreeView.ViewCodeGraph', async (node) => {
         await treeView.ViewCodeGraph(node);
     });

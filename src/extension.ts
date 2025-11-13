@@ -104,6 +104,14 @@ export function activate(context: vscode.ExtensionContext) {
 		await treeView.OpenCodeFile(node);
 	});
 
+	vscode.commands.registerCommand('StepFuncTreeView.DownloadDefinitionFromAWS', async (node: StepFuncTreeItem) => {
+		await treeView.DownloadDefinitionFromAWS(node);
+	});
+
+	vscode.commands.registerCommand('StepFuncTreeView.CompareLocalWithAWS', async (node: StepFuncTreeItem) => {
+		await treeView.CompareLocalWithAWS(node);
+	});
+
 	vscode.commands.registerCommand('StepFuncTreeView.ViewCodeGraph', async (node: StepFuncTreeItem) => {
 		await treeView.ViewCodeGraph(node);
 	});
