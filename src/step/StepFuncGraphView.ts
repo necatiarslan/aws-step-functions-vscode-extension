@@ -330,8 +330,11 @@ export class StepFuncGraphView {
 					this.nodeWidth = 120;
 					this.nodeHeight = 60;
 					this.horizontalGap = 60;
-					this.verticalGap = 80;
+					this.verticalGap = 120; // Increased gap to fit arrows
 					this.layers = [];
+					this.allStates = {}; // Will include branch states
+					this.branchParents = new Map(); // Track which parallel state owns which branch states
+					this.nodeSizes = new Map(); // Track custom sizes for nodes (Parallel, Map)
 				}
 
 				render() {
@@ -341,6 +344,7 @@ export class StepFuncGraphView {
 							return;
 						}
 
+						this.flattenBranchStates();
 						this.calculateLayout();
 						this.drawGraph();
 						document.getElementById('legend').style.display = 'block';
@@ -354,6 +358,11 @@ export class StepFuncGraphView {
 					this.container.innerHTML = '<div class="error-message">' + message + '</div>';
 				}
 
+				flattenBranchStates() {
+					// Start with main states - do NOT flatten branches, we'll show them in the parent box
+					this.allStates = { ...this.states };
+				}
+
 				calculateLayout() {
 					const visited = new Set();
 					const layers = [];
@@ -362,7 +371,7 @@ export class StepFuncGraphView {
 					while (queue.length > 0) {
 						const [stateName, layer] = queue.shift();
 						
-						if (visited.has(stateName) || !this.states[stateName]) {
+						if (visited.has(stateName) || !this.allStates[stateName]) {
 							continue;
 						}
 
@@ -373,8 +382,8 @@ export class StepFuncGraphView {
 						}
 						layers[layer].push(stateName);
 
-						const state = this.states[stateName];
-						const nextStates = this.getNextStates(state);
+						const state = this.allStates[stateName];
+						const nextStates = this.getNextStates(state, stateName);
 						
 						for (const next of nextStates) {
 							if (!visited.has(next)) {
@@ -398,7 +407,7 @@ export class StepFuncGraphView {
 					});
 				}
 
-				getNextStates(state) {
+				getNextStates(state, stateName) {
 					const nexts = [];
 					
 					if (state.Next) {
@@ -424,17 +433,8 @@ export class StepFuncGraphView {
 						});
 					}
 
-					if (state.Type === 'Parallel' && state.Branches) {
-						state.Branches.forEach(branch => {
-							if (branch.StartAt) {
-								nexts.push(branch.StartAt);
-							}
-						});
-					}
-
-					if (state.Type === 'Map' && state.Iterator && state.Iterator.StartAt) {
-						nexts.push(state.Iterator.StartAt);
-					}
+					// For Parallel and Map states, just skip to the Next state after them
+					// Don't add branch states as separate nodes
 					
 					return nexts;
 				}
@@ -478,13 +478,13 @@ export class StepFuncGraphView {
 
 					// Draw arrows first (so they appear behind boxes)
 					this.nodePositions.forEach((fromPos, fromState) => {
-						const state = this.states[fromState];
-						const nexts = this.getNextStates(state);
+						const state = this.allStates[fromState];
+						const nexts = this.getNextStates(state, fromState);
 						
 						nexts.forEach(toState => {
 							const toPos = this.nodePositions.get(toState);
 							if (toPos) {
-								this.drawArrow(svg, fromPos, toPos, offsetX, offsetY);
+								this.drawArrow(svg, fromPos, toPos, offsetX, offsetY, fromState, toState);
 							}
 						});
 					});
@@ -511,11 +511,18 @@ export class StepFuncGraphView {
 					this.container.appendChild(svg);
 				}
 
-				drawArrow(svg, fromPos, toPos, offsetX, offsetY) {
+				drawArrow(svg, fromPos, toPos, offsetX, offsetY, fromState, toState) {
+					// Get custom sizes if they exist
+					const fromSize = this.nodeSizes.get(fromState) || { width: this.nodeWidth, height: this.nodeHeight };
+					const toSize = this.nodeSizes.get(toState) || { width: this.nodeWidth, height: this.nodeHeight };
+					
+					// Start from bottom middle of source box
 					const x1 = fromPos.x + offsetX;
-					const y1 = fromPos.y + offsetY + this.nodeHeight / 2;
+					const y1 = fromPos.y + offsetY + fromSize.height / 2;
+					
+					// End at top middle of target box
 					const x2 = toPos.x + offsetX;
-					const y2 = toPos.y + offsetY - this.nodeHeight / 2;
+					const y2 = toPos.y + offsetY - toSize.height / 2;
 
 					const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 					
@@ -529,18 +536,41 @@ export class StepFuncGraphView {
 				}
 
 				createStateBox(stateName, pos, offsetX, offsetY) {
-					const state = this.states[stateName];
+					const state = this.allStates[stateName];
 					const div = document.createElement('div');
 					
-					const x = pos.x + offsetX - this.nodeWidth / 2;
-					const y = pos.y + offsetY - this.nodeHeight / 2;
+					// Calculate box size based on content
+					let boxWidth = this.nodeWidth;
+					let boxHeight = this.nodeHeight;
+					
+					// For Parallel states, calculate size to fit all branches
+					if (state.Type === 'Parallel' && state.Branches) {
+						// Calculate height needed for branches
+						const branchCount = state.Branches.length;
+						const branchHeight = 60; // Approximate height per branch
+						boxHeight = Math.max(this.nodeHeight, 40 + (branchCount * branchHeight));
+						boxWidth = Math.max(this.nodeWidth, 160);
+					}
+					
+					// For Map states, calculate size to fit iterator
+					if (state.Type === 'Map' && state.Iterator && state.Iterator.States) {
+						boxHeight = Math.max(this.nodeHeight, 120);
+						boxWidth = Math.max(this.nodeWidth, 160);
+					}
+					
+					// Store custom size for arrow calculations
+					this.nodeSizes.set(stateName, { width: boxWidth, height: boxHeight });
+					
+					const x = pos.x + offsetX - boxWidth / 2;
+					const y = pos.y + offsetY - boxHeight / 2;
 					
 					div.className = 'state-box ' + (state.Type || 'task').toLowerCase();
 					div.style.position = 'absolute';
 					div.style.left = x + 'px';
 					div.style.top = y + 'px';
-					div.style.width = this.nodeWidth + 'px';
-					div.style.minHeight = this.nodeHeight + 'px';
+					div.style.width = boxWidth + 'px';
+					div.style.height = boxHeight + 'px';
+					div.style.minHeight = 'auto';
 					
 					const nameDiv = document.createElement('div');
 					nameDiv.className = 'state-name';
@@ -555,11 +585,99 @@ export class StepFuncGraphView {
 					typeDiv.textContent = state.Type || 'Task';
 					div.appendChild(typeDiv);
 
+					// Show branches for Parallel states
+					if (state.Type === 'Parallel' && state.Branches) {
+						const branchesDiv = document.createElement('div');
+						branchesDiv.style.marginTop = '8px';
+						branchesDiv.style.fontSize = '9px';
+						branchesDiv.style.borderTop = '1px solid var(--vscode-panel-border)';
+						branchesDiv.style.paddingTop = '5px';
+						
+						state.Branches.forEach((branch, index) => {
+							const branchDiv = document.createElement('div');
+							branchDiv.style.marginBottom = '4px';
+							branchDiv.style.padding = '3px';
+							branchDiv.style.background = 'rgba(123, 104, 238, 0.1)';
+							branchDiv.style.borderRadius = '3px';
+							branchDiv.style.borderLeft = '2px solid #7B68EE';
+							
+							const branchTitle = document.createElement('div');
+							branchTitle.style.fontWeight = 'bold';
+							branchTitle.style.marginBottom = '2px';
+							branchTitle.textContent = '⎇ Branch ' + index;
+							branchDiv.appendChild(branchTitle);
+							
+							if (branch.States) {
+								const stateNames = Object.keys(branch.States);
+								const statesText = document.createElement('div');
+								statesText.style.fontSize = '8px';
+								statesText.style.opacity = '0.8';
+								statesText.textContent = stateNames.join(' → ');
+								if (statesText.textContent.length > 25) {
+									statesText.textContent = statesText.textContent.substring(0, 25) + '...';
+								}
+								statesText.title = stateNames.join(' → ');
+								branchDiv.appendChild(statesText);
+								
+								const countDiv = document.createElement('div');
+								countDiv.style.fontSize = '8px';
+								countDiv.style.marginTop = '2px';
+								countDiv.textContent = stateNames.length + ' state(s)';
+								branchDiv.appendChild(countDiv);
+							}
+							
+							branchesDiv.appendChild(branchDiv);
+						});
+						
+						div.appendChild(branchesDiv);
+					}
+
+					// Show iterator for Map states
+					if (state.Type === 'Map' && state.Iterator && state.Iterator.States) {
+						const iteratorDiv = document.createElement('div');
+						iteratorDiv.style.marginTop = '8px';
+						iteratorDiv.style.fontSize = '9px';
+						iteratorDiv.style.borderTop = '1px solid var(--vscode-panel-border)';
+						iteratorDiv.style.paddingTop = '5px';
+						
+						const iterDiv = document.createElement('div');
+						iterDiv.style.padding = '3px';
+						iterDiv.style.background = 'rgba(155, 89, 182, 0.1)';
+						iterDiv.style.borderRadius = '3px';
+						iterDiv.style.borderLeft = '2px solid #9B59B6';
+						
+						const iterTitle = document.createElement('div');
+						iterTitle.style.fontWeight = 'bold';
+						iterTitle.style.marginBottom = '2px';
+						iterTitle.textContent = '↻ Iterator';
+						iterDiv.appendChild(iterTitle);
+						
+						const stateNames = Object.keys(state.Iterator.States);
+						const statesText = document.createElement('div');
+						statesText.style.fontSize = '8px';
+						statesText.style.opacity = '0.8';
+						statesText.textContent = stateNames.join(' → ');
+						if (statesText.textContent.length > 25) {
+							statesText.textContent = statesText.textContent.substring(0, 25) + '...';
+						}
+						statesText.title = stateNames.join(' → ');
+						iterDiv.appendChild(statesText);
+						
+						const countDiv = document.createElement('div');
+						countDiv.style.fontSize = '8px';
+						countDiv.style.marginTop = '2px';
+						countDiv.textContent = stateNames.length + ' state(s)';
+						iterDiv.appendChild(countDiv);
+						
+						iteratorDiv.appendChild(iterDiv);
+						div.appendChild(iteratorDiv);
+					}
+
 					if (state.Resource) {
 						const resourceDiv = document.createElement('div');
 						resourceDiv.className = 'state-details';
 						const shortResource = state.Resource.split(':').pop() || state.Resource;
-						resourceDiv.textContent = shortResource.substring(0, 20) + (shortResource.length > 20 ? '...' : '');
+						resourceDiv.textContent = shortResource.substring(0, 15) + (shortResource.length > 15 ? '...' : '');
 						resourceDiv.title = state.Resource;
 						div.appendChild(resourceDiv);
 					}
