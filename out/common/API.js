@@ -178,7 +178,8 @@ async function GetStepFuncLogGroupArn(StepFuncArn) {
         const describeResult = await GetStepFuncDescription(StepFuncArn);
         if (describeResult.isSuccessful && describeResult.result) {
             const loggingConfig = describeResult.result.loggingConfiguration;
-            if (loggingConfig?.enabled && loggingConfig.destinations?.length) {
+            ui.logToOutput("GetStepFuncLogGroupArn: loggingConfig " + JSON.stringify(loggingConfig));
+            if (loggingConfig.destinations?.length) {
                 const cw = loggingConfig.destinations.find((d) => d.cloudWatchLogsLogGroup);
                 let logGroupArn = cw?.cloudWatchLogsLogGroup?.logGroupArn ?? null;
                 ui.logToOutput("GetStepFuncLogGroupArn: " + logGroupArn);
