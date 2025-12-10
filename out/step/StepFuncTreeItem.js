@@ -135,7 +135,7 @@ class StepFuncTreeItem extends vscode.TreeItem {
             this.contextValue = "FailedExecutionGroup";
         }
         else if (this.TreeItemType === TreeItemType.RunningExecutionGroup) {
-            this.iconPath = new vscode.ThemeIcon('sync~spin');
+            this.iconPath = new vscode.ThemeIcon('sync');
             this.contextValue = "RunningExecutionGroup";
         }
         else {

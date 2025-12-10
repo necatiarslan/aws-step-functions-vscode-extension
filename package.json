@@ -45,19 +45,23 @@
       },
       {
         "command": "StepFuncTreeView.AddToFav",
-        "title": "Fav"
+        "title": "Fav",
+        "icon": "$(star)"
       },
       {
         "command": "StepFuncTreeView.DeleteFromFav",
-        "title": "UnFav"
+        "title": "UnFav",
+        "icon": "$(star-empty)"
       },
       {
         "command": "StepFuncTreeView.HideNode",
-        "title": "Hide"
+        "title": "Hide",
+        "icon": "$(eye-closed)"
       },
       {
         "command": "StepFuncTreeView.UnHideNode",
-        "title": "UnHide"
+        "title": "UnHide",
+        "icon": "$(eye)"
       },
       {
         "command": "StepFuncTreeView.AddStepFunc",
@@ -66,11 +70,13 @@
       },
       {
         "command": "StepFuncTreeView.RemoveStepFunc",
-        "title": "Remove StepFunc"
+        "title": "Remove StepFunc",
+        "icon": "$(trash)"
       },
       {
         "command": "StepFuncTreeView.Goto",
-        "title": "Goto Aws Console"
+        "title": "Goto Aws Console",
+        "icon": "$(link-external)"
       },
       {
         "command": "StepFuncTreeView.SelectAwsProfile",
@@ -185,23 +191,27 @@
       {
         "command": "StepFuncTreeView.PrintStepFunc",
         "title": "Print StepFunc",
-        "icon": "$(lightbulb)"
+        "icon": "$(debug-print)"
       },
       {
         "command": "StepFuncTreeView.TestAwsConnection",
-        "title": "Test Aws Connection"
+        "title": "Test Aws Connection",
+        "icon": "$(plug)"
       },
       {
         "command": "StepFuncTreeView.UpdateAwsEndPoint",
-        "title": "Update Aws EndPoint"
+        "title": "Update Aws EndPoint",
+        "icon": "$(settings)"
       },
       {
         "command": "StepFuncTreeView.Donate",
-        "title": "Donate"
+        "title": "Donate",
+        "icon": "$(heart)"
       },
       {
         "command": "StepFuncTreeView.BugAndNewFeature",
-        "title": "Bug and New Feature"
+        "title": "Bug and New Feature",
+        "icon": "$(issues)"
       }
     ],
     "menus": {
