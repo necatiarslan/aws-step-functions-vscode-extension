@@ -7,6 +7,7 @@ import * as api from '../common/API';
 import { CloudWatchLogView } from '../cloudwatch/CloudWatchLogView';
 import { StepFuncGraphView } from './StepFuncGraphView';
 import { StepFuncStudioView } from './StepFuncStudioView';
+import { StepFuncExecutionView } from './StepFuncExecutionView';
 
 export class StepFuncTreeView {
 
@@ -959,6 +960,14 @@ export class StepFuncTreeView {
 		let jsonString = JSON.stringify(result.result, null, 2);
 		ui.ShowTextDocument(jsonString, "json");
 		this.SetNodeRunning(node, false);
+	}
+
+	async ViewExecutionInWindow(node: StepFuncTreeItem) {
+		ui.logToOutput('StepFuncTreeView.ViewExecutionInWindow Started');
+		if(node.TreeItemType !== TreeItemType.Execution) { return; }
+		if(!node.ExecutionArn){ return; }
+
+		StepFuncExecutionView.Render(this.context.extensionUri, node.ExecutionArn, node.StepFuncArn, node.Region);
 	}
 
 	async ViewExecutionLog(node: StepFuncTreeItem) {

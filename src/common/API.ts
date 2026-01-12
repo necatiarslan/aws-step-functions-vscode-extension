@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import { fromIni } from "@aws-sdk/credential-provider-ini";
-import { ListStateMachinesCommand, StartExecutionCommand, DescribeStateMachineCommand, SFNClient, ListExecutionsCommand, ExecutionListItem, DescribeExecutionCommand, DescribeExecutionCommandOutput } from "@aws-sdk/client-sfn";
+import { ListStateMachinesCommand, StartExecutionCommand, DescribeStateMachineCommand, SFNClient, ListExecutionsCommand, ExecutionListItem, DescribeExecutionCommand, DescribeExecutionCommandOutput, GetExecutionHistoryCommand, HistoryEvent } from "@aws-sdk/client-sfn";
 import { CloudWatchLogsClient, OutputLogEvent } from "@aws-sdk/client-cloudwatch-logs";
 import { IAMClient } from "@aws-sdk/client-iam";
 import * as ui from "./UI";
@@ -822,6 +822,42 @@ export async function GetExecutionDetails(
     result.error = error;
     ui.showErrorMessage("api.GetExecutionDetails Error !!!", error);
     ui.logToOutput("api.GetExecutionDetails Error !!!", error);
+    return result;
+  }
+}
+
+export async function GetExecutionHistory(
+  Region: string,
+  ExecutionArn: string,
+  maxResults: number = 100,
+  nextToken?: string
+): Promise<MethodResult<{events: HistoryEvent[], nextToken?: string}>> {
+  ui.logToOutput("Getting execution history for: " + ExecutionArn);
+  let result: MethodResult<{events: HistoryEvent[], nextToken?: string}> = new MethodResult<{events: HistoryEvent[], nextToken?: string}>();
+  result.result = { events: [] };
+
+  try {
+    const sfn = await GetStepFuncClient(Region);
+
+    const command = new GetExecutionHistoryCommand({
+      executionArn: ExecutionArn,
+      maxResults,
+      nextToken,
+      reverseOrder: true,
+    });
+
+    const response = await sfn.send(command);
+    result.result = {
+      events: response.events || [],
+      nextToken: (response as any).nextToken
+    };
+    result.isSuccessful = true;
+    return result;
+  } catch (error: any) {
+    result.isSuccessful = false;
+    result.error = error;
+    ui.showErrorMessage("api.GetExecutionHistory Error !!!", error);
+    ui.logToOutput("api.GetExecutionHistory Error !!!", error);
     return result;
   }
 }

@@ -166,6 +166,10 @@ export function activate(context: vscode.ExtensionContext) {
 		await treeView.ViewExecutionLog(node);
 	});
 
+	vscode.commands.registerCommand('StepFuncTreeView.ViewExecutionInWindow', async (node: StepFuncTreeItem) => {
+		await treeView.ViewExecutionInWindow(node);
+	});
+
 	ui.logToOutput('Aws StepFunc Extension activation completed');
 }
 

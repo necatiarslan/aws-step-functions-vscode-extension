@@ -2,7 +2,7 @@
   "name": "aws-step-functions-vscode-extension",
   "displayName": "Aws Step Functions",
   "description": "Update, Trigger & Monitor your Aws Step Functions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "NecatiARSLAN",
   "repository": {
     "type": "git",
@@ -152,6 +152,11 @@
         "command": "StepFuncTreeView.ViewExecutionLog",
         "title": "View Execution Log",
         "icon": "$(output)"
+      },
+      {
+        "command": "StepFuncTreeView.ViewExecutionInWindow",
+        "title": "View Execution Details",
+        "icon": "$(window)"
       },
       {
         "command": "StepFuncTreeView.SetCodePath",
@@ -400,6 +405,11 @@
         },
         {
           "command": "StepFuncTreeView.ViewExecutionLog",
+          "when": "view == StepFuncTreeView && viewItem == Execution",
+          "group": "inline"
+        },
+        {
+          "command": "StepFuncTreeView.ViewExecutionInWindow",
           "when": "view == StepFuncTreeView && viewItem == Execution",
           "group": "inline"
         }

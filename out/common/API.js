@@ -25,6 +25,7 @@ exports.GetAwsProfileList = GetAwsProfileList;
 exports.getIniProfileData = getIniProfileData;
 exports.GetStepFuncExecutions = GetStepFuncExecutions;
 exports.GetExecutionDetails = GetExecutionDetails;
+exports.GetExecutionHistory = GetExecutionHistory;
 /* eslint-disable @typescript-eslint/naming-convention */
 const credential_providers_1 = require("@aws-sdk/credential-providers");
 const client_sfn_1 = require("@aws-sdk/client-sfn");
@@ -700,6 +701,34 @@ async function GetExecutionDetails(Region, ExecutionArn) {
         result.error = error;
         ui.showErrorMessage("api.GetExecutionDetails Error !!!", error);
         ui.logToOutput("api.GetExecutionDetails Error !!!", error);
+        return result;
+    }
+}
+async function GetExecutionHistory(Region, ExecutionArn, maxResults = 100, nextToken) {
+    ui.logToOutput("Getting execution history for: " + ExecutionArn);
+    let result = new MethodResult_1.MethodResult();
+    result.result = { events: [] };
+    try {
+        const sfn = await GetStepFuncClient(Region);
+        const command = new client_sfn_1.GetExecutionHistoryCommand({
+            executionArn: ExecutionArn,
+            maxResults,
+            nextToken,
+            reverseOrder: true,
+        });
+        const response = await sfn.send(command);
+        result.result = {
+            events: response.events || [],
+            nextToken: response.nextToken
+        };
+        result.isSuccessful = true;
+        return result;
+    }
+    catch (error) {
+        result.isSuccessful = false;
+        result.error = error;
+        ui.showErrorMessage("api.GetExecutionHistory Error !!!", error);
+        ui.logToOutput("api.GetExecutionHistory Error !!!", error);
         return result;
     }
 }

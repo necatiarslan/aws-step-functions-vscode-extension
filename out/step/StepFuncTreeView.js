@@ -9,6 +9,7 @@ const ui = require("../common/UI");
 const api = require("../common/API");
 const CloudWatchLogView_1 = require("../cloudwatch/CloudWatchLogView");
 const StepFuncStudioView_1 = require("./StepFuncStudioView");
+const StepFuncExecutionView_1 = require("./StepFuncExecutionView");
 class StepFuncTreeView {
     static Current;
     view;
@@ -900,6 +901,16 @@ class StepFuncTreeView {
         let jsonString = JSON.stringify(result.result, null, 2);
         ui.ShowTextDocument(jsonString, "json");
         this.SetNodeRunning(node, false);
+    }
+    async ViewExecutionInWindow(node) {
+        ui.logToOutput('StepFuncTreeView.ViewExecutionInWindow Started');
+        if (node.TreeItemType !== StepFuncTreeItem_1.TreeItemType.Execution) {
+            return;
+        }
+        if (!node.ExecutionArn) {
+            return;
+        }
+        StepFuncExecutionView_1.StepFuncExecutionView.Render(this.context.extensionUri, node.ExecutionArn, node.StepFuncArn, node.Region);
     }
     async ViewExecutionLog(node) {
         ui.logToOutput('StepFuncTreeView.ViewExecutionLog Started');
