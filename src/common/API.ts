@@ -762,7 +762,7 @@ export const getConfigFilepath = () =>
 export async function GetStepFuncExecutions(
   StepFuncArn: string,
   ExecutionName?: string,
-  MaxResults: number = 20,
+  MaxResults: number = 100,
   StatusFilter?: string
 ): Promise<MethodResult<ExecutionListItem[]>> {
   ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);

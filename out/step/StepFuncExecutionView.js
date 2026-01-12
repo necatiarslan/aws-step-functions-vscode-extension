@@ -17,8 +17,6 @@ class StepFuncExecutionView {
     _executionInput = '';
     _executionOutput = '';
     _stateHistory = [];
-    _currentPageToken;
-    _pageSize = 50;
     _isLoading = false;
     static Render(extensionUri, executionArn, stepFuncArn, region) {
         ui.logToOutput('StepFuncExecutionView.Render Started');
@@ -63,19 +61,29 @@ class StepFuncExecutionView {
             ui.logToOutput('Error loading execution details', error);
         }
     }
-    async LoadExecutionHistory(nextToken) {
+    async LoadExecutionHistory() {
         if (this._isLoading)
             return;
         this._isLoading = true;
         try {
-            const result = await api.GetExecutionHistory(this._region, this._executionArn, this._pageSize, nextToken);
-            if (result.isSuccessful && result.result) {
-                const events = result.result.events || [];
-                this._currentPageToken = result.result.nextToken;
-                // Parse state history from events
-                this._parseStateHistory(events, nextToken ? true : false);
-                ui.logToOutput(`Loaded ${events.length} execution history events`);
-            }
+            let allEvents = [];
+            let nextToken;
+            // Load all events by fetching pages
+            do {
+                const result = await api.GetExecutionHistory(this._region, this._executionArn, 100, // Max results per page
+                nextToken);
+                if (result.isSuccessful && result.result) {
+                    const events = result.result.events || [];
+                    allEvents = [...allEvents, ...events];
+                    nextToken = result.result.nextToken;
+                }
+                else {
+                    break;
+                }
+            } while (nextToken);
+            // Parse all state history from events
+            this._parseStateHistory(allEvents);
+            ui.logToOutput(`Loaded ${allEvents.length} execution history events`);
         }
         catch (error) {
             ui.logToOutput('Error loading execution history', error);
@@ -84,7 +92,7 @@ class StepFuncExecutionView {
             this._isLoading = false;
         }
     }
-    _parseStateHistory(events, append = false) {
+    _parseStateHistory(events) {
         const stateMap = new Map();
         const sortedEvents = events.sort((a, b) => (a.id || 0) - (b.id || 0));
         for (const event of sortedEvents) {
@@ -125,14 +133,9 @@ class StepFuncExecutionView {
                 }
             }
         }
-        // Convert map to array and add to state history
+        // Convert map to array and set as state history
         const newStates = Array.from(stateMap.values()).sort((a, b) => (a.id || 0) - (b.id || 0));
-        if (append) {
-            this._stateHistory = [...this._stateHistory, ...newStates];
-        }
-        else {
-            this._stateHistory = newStates;
-        }
+        this._stateHistory = newStates;
     }
     _extractStateType(eventType) {
         return eventType
@@ -150,7 +153,8 @@ class StepFuncExecutionView {
         const mainUri = ui.getUri(this._panel.webview, this._extensionUri, ['media', 'main.js']);
         const executionStatus = this._executionDetails?.status || 'Unknown';
         const executionType = this._executionDetails?.stateMachineArn ? 'Standard' : 'Express';
-        const roleArn = this._executionDetails?.roleArn || 'N/A';
+        const error = this._executionDetails?.cause ? JSON.parse(this._executionDetails.cause).error || 'N/A' : 'N/A';
+        const cause = this._executionDetails?.cause || 'N/A';
         const startTime = this._executionDetails?.startDate ? this._formatDateTime(this._executionDetails.startDate) : 'N/A';
         const stopTime = this._executionDetails?.stopDate ? this._formatDateTime(this._executionDetails.stopDate) : 'N/A';
         const duration = this._calculateDuration();
@@ -178,7 +182,6 @@ class StepFuncExecutionView {
 				</td>
 			</tr>
 		`).join('');
-        const hasMorePages = !!this._currentPageToken;
         return `
 			<!DOCTYPE html>
 			<html lang="en">
@@ -252,6 +255,11 @@ class StepFuncExecutionView {
 						word-break: break-all;
 						font-family: 'Courier New', monospace;
 						font-size: 12px;
+					}
+
+					.detail-value-wrap {
+						white-space: normal;
+						word-wrap: break-word;
 					}
 
 					.editor-container {
@@ -407,12 +415,16 @@ class StepFuncExecutionView {
 								<span class="detail-value">${this._escapeHtml(this._executionArn)}</span>
 							</div>
 							<div class="detail-item">
-								<span class="detail-label">IAM Role ARN</span>
-								<span class="detail-value">${this._escapeHtml(roleArn)}</span>
+								<span class="detail-label">Error</span>
+								<span class="detail-value">${this._escapeHtml(error)}</span>
 							</div>
 							<div class="detail-item">
 								<span class="detail-label">Start Time</span>
 								<span class="detail-value">${startTime}</span>
+							</div>
+							<div class="detail-item">
+								<span class="detail-label">Cause</span>
+								<span class="detail-value detail-value-wrap">${this._escapeHtml(cause)}</span>
 							</div>
 							<div class="detail-item">
 								<span class="detail-label">Stop Time</span>
@@ -455,7 +467,6 @@ class StepFuncExecutionView {
 
 						<div class="button-group">
 							<button id="refreshBtn">Refresh</button>
-							${hasMorePages ? '<button id="loadMoreBtn">Load More Events</button>' : ''}
 						</div>
 						${this._isLoading ? '<div class="loading">Loading...</div>' : ''}
 					</div>
@@ -553,10 +564,6 @@ class StepFuncExecutionView {
 						vscode.postMessage({ command: 'refresh' });
 					});
 
-					document.getElementById('loadMoreBtn')?.addEventListener('click', () => {
-						vscode.postMessage({ command: 'loadMore' });
-					});
-
 					// State input/output links
 					document.querySelectorAll('.state-link:not(.disabled)').forEach(link => {
 						link.addEventListener('click', (e) => {
@@ -630,9 +637,6 @@ class StepFuncExecutionView {
                 case 'refresh':
                     await this._handleRefresh();
                     break;
-                case 'loadMore':
-                    await this._handleLoadMore();
-                    break;
             }
         }, null);
     }
@@ -658,17 +662,9 @@ class StepFuncExecutionView {
     async _handleRefresh() {
         ui.logToOutput('StepFuncExecutionView: Refresh clicked');
         this._stateHistory = [];
-        this._currentPageToken = undefined;
         await this.LoadExecutionDetails();
         await this.LoadExecutionHistory();
         this.RenderHtml();
-    }
-    async _handleLoadMore() {
-        ui.logToOutput('StepFuncExecutionView: Load More clicked');
-        if (this._currentPageToken) {
-            await this.LoadExecutionHistory(this._currentPageToken);
-            this.RenderHtml();
-        }
     }
     _calculateDuration() {
         if (!this._executionDetails?.startDate)

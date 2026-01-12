@@ -651,7 +651,7 @@ const getCredentialsFilepath = () => process.env[exports.ENV_CREDENTIALS_PATH] |
 exports.getCredentialsFilepath = getCredentialsFilepath;
 const getConfigFilepath = () => process.env[exports.ENV_CREDENTIALS_PATH] || (0, path_2.join)((0, exports.getHomeDir)(), ".aws", "config");
 exports.getConfigFilepath = getConfigFilepath;
-async function GetStepFuncExecutions(StepFuncArn, ExecutionName, MaxResults = 20, StatusFilter) {
+async function GetStepFuncExecutions(StepFuncArn, ExecutionName, MaxResults = 100, StatusFilter) {
     ui.logToOutput("Getting executions for StepFunc: " + StepFuncArn);
     let result = new MethodResult_1.MethodResult();
     result.result = [];
