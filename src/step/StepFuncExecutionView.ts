@@ -359,6 +359,7 @@ export class StepFuncExecutionView {
 						<button class="tab-button active" data-tab="status">Status</button>
 						<button class="tab-button" data-tab="input">Input</button>
 						<button class="tab-button" data-tab="output">Output</button>
+						<button class="tab-button" data-tab="stateHistory">States</button>
 					</div>
 
 					<!-- Status Tab -->
@@ -405,30 +406,30 @@ export class StepFuncExecutionView {
 					<div id="output" class="tab-content">
 						<div id="outputEditor" class="editor-container"></div>
 					</div>
-				</div>
 
-				<div class="detail-section">
-					<h2>State History</h2>
-					<table>
-						<thead>
-							<tr>
-								<th>State Name</th>
-								<th>Type</th>
-								<th>Status</th>
-								<th>Duration</th>
-								<th>Start Time</th>
-							</tr>
-						</thead>
-						<tbody>
-							${stateTableRows}
-						</tbody>
-					</table>
+					<!-- State History Tab -->
+					<div id="stateHistory" class="tab-content">
+						<table>
+							<thead>
+								<tr>
+									<th>State Name</th>
+									<th>Type</th>
+									<th>Status</th>
+									<th>Duration</th>
+									<th>Start Time</th>
+								</tr>
+							</thead>
+							<tbody>
+								${stateTableRows}
+							</tbody>
+						</table>
 
-					<div class="button-group">
-						<button id="refreshBtn">Refresh</button>
-						${hasMorePages ? '<button id="loadMoreBtn">Load More Events</button>' : ''}
+						<div class="button-group">
+							<button id="refreshBtn">Refresh</button>
+							${hasMorePages ? '<button id="loadMoreBtn">Load More Events</button>' : ''}
+						</div>
+						${this._isLoading ? '<div class="loading">Loading...</div>' : ''}
 					</div>
-					${this._isLoading ? '<div class="loading">Loading...</div>' : ''}
 				</div>
 
 				<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
