@@ -6,6 +6,7 @@ import * as ui from '../common/UI';
 import * as api from '../common/API';
 import { CloudWatchLogView } from '../cloudwatch/CloudWatchLogView';
 import { StepFuncGraphView } from './StepFuncGraphView';
+import { StepFuncStudioView } from './StepFuncStudioView';
 
 export class StepFuncTreeView {
 
@@ -999,6 +1000,8 @@ export class StepFuncTreeView {
 			return;
 		}
 
-		StepFuncGraphView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
+		//StepFuncGraphView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
+		StepFuncStudioView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
+
 	}
 }

@@ -405,6 +405,23 @@
         }
       ]
     },
+    "customEditors": [
+      {
+        "viewType": "stepFuncStudio.asl",
+        "displayName": "Workflow Studio",
+        "selector": [
+          {
+            "filenamePattern": "*.asl.json"
+          },
+          {
+            "filenamePattern": "*.asl.yaml"
+          },
+          {
+            "filenamePattern": "*.asl.yml"
+          }
+        ]
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

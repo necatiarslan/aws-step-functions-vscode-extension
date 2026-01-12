@@ -2,9 +2,15 @@ import * as vscode from 'vscode';
 import * as ui from './common/UI';
 import { StepFuncTreeView } from './step/StepFuncTreeView';
 import { StepFuncTreeItem } from './step/StepFuncTreeItem';
+import { StepFuncStudioEditorProvider } from './step/StepFuncStudioView';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws StepFunc Extension activation started');
+
+	// Register Workflow Studio custom editor provider
+	context.subscriptions.push(
+		StepFuncStudioEditorProvider.register(context)
+	);
 
 	let treeView:StepFuncTreeView = new StepFuncTreeView(context);
 

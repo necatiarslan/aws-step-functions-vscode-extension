@@ -60,6 +60,7 @@ https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 ## Todo  
 - show execution events 
 - fix graph view
+  - https://github.com/aws/aws-toolkit-vscode/tree/master/packages/core/src/stepFunctions/workflowStudio
 - add table view
 - add execution events view, state view
 - add execution input and output buttons to view

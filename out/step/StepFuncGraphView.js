@@ -5,6 +5,7 @@ exports.StepFuncGraphView = void 0;
 const vscode = require("vscode");
 const ui = require("../common/UI");
 const fs = require("fs");
+const StepFuncStudioView_1 = require("./StepFuncStudioView");
 class StepFuncGraphView {
     static Current;
     _panel;
@@ -53,6 +54,19 @@ class StepFuncGraphView {
         catch (error) {
             ui.logToOutput("StepFuncGraphView.Render Error !!!", error);
             ui.showErrorMessage('Failed to load Step Function definition', error);
+        }
+    }
+    static async RenderWorkflowStudio(extensionUri, stepFuncName, codePath) {
+        ui.logToOutput('StepFuncGraphView.RenderWorkflowStudio Started');
+        try {
+            // Read the ASL JSON file
+            const fileContent = fs.readFileSync(codePath, 'utf8');
+            const aslDefinition = JSON.parse(fileContent);
+            await StepFuncStudioView_1.StepFuncStudioView.Render(extensionUri, stepFuncName, aslDefinition);
+        }
+        catch (error) {
+            ui.logToOutput("StepFuncGraphView.RenderWorkflowStudio Error !!!", error);
+            ui.showErrorMessage('Failed to open Workflow Studio', error);
         }
     }
     _getWebviewContent(webview, extensionUri) {

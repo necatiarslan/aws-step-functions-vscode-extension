@@ -8,7 +8,7 @@ const StepFuncTreeDataProvider_1 = require("./StepFuncTreeDataProvider");
 const ui = require("../common/UI");
 const api = require("../common/API");
 const CloudWatchLogView_1 = require("../cloudwatch/CloudWatchLogView");
-const StepFuncGraphView_1 = require("./StepFuncGraphView");
+const StepFuncStudioView_1 = require("./StepFuncStudioView");
 class StepFuncTreeView {
     static Current;
     view;
@@ -942,7 +942,8 @@ class StepFuncTreeView {
             ui.showWarningMessage('Please Set Code Path First');
             return;
         }
-        StepFuncGraphView_1.StepFuncGraphView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
+        //StepFuncGraphView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
+        StepFuncStudioView_1.StepFuncStudioView.Render(this.context.extensionUri, node.StepFuncName, node.CodePath);
     }
 }
 exports.StepFuncTreeView = StepFuncTreeView;

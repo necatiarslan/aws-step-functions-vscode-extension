@@ -5,8 +5,11 @@ exports.deactivate = deactivate;
 const vscode = require("vscode");
 const ui = require("./common/UI");
 const StepFuncTreeView_1 = require("./step/StepFuncTreeView");
+const StepFuncStudioView_1 = require("./step/StepFuncStudioView");
 function activate(context) {
     ui.logToOutput('Aws StepFunc Extension activation started');
+    // Register Workflow Studio custom editor provider
+    context.subscriptions.push(StepFuncStudioView_1.StepFuncStudioEditorProvider.register(context));
     let treeView = new StepFuncTreeView_1.StepFuncTreeView(context);
     vscode.commands.registerCommand('StepFuncTreeView.Refresh', () => {
         treeView.Refresh();

@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import * as ui from '../common/UI';
 import * as fs from 'fs';
+import { StepFuncStudioView } from './StepFuncStudioView';
 
 export class StepFuncGraphView {
     public static Current: StepFuncGraphView | undefined;
@@ -62,6 +63,21 @@ export class StepFuncGraphView {
         } catch (error: any) {
             ui.logToOutput("StepFuncGraphView.Render Error !!!", error);
             ui.showErrorMessage('Failed to load Step Function definition', error);
+        }
+    }
+
+    public static async RenderWorkflowStudio(extensionUri: vscode.Uri, stepFuncName: string, codePath: string) {
+        ui.logToOutput('StepFuncGraphView.RenderWorkflowStudio Started');
+        
+        try {
+            // Read the ASL JSON file
+            const fileContent = fs.readFileSync(codePath, 'utf8');
+            const aslDefinition = JSON.parse(fileContent);
+
+            await StepFuncStudioView.Render(extensionUri, stepFuncName, aslDefinition);
+        } catch (error: any) {
+            ui.logToOutput("StepFuncGraphView.RenderWorkflowStudio Error !!!", error);
+            ui.showErrorMessage('Failed to open Workflow Studio', error);
         }
     }
 
