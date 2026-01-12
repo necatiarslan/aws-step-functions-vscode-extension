@@ -97,13 +97,15 @@ class StepFuncExecutionView {
                 const stateName = details.name || 'Unknown';
                 const stateType = this._extractStateType(type);
                 if (!stateMap.has(stateName)) {
+                    const details = event.stateEnteredEventDetails || {};
                     stateMap.set(stateName, {
                         name: stateName,
                         type: stateType,
                         status: 'Running',
                         duration: 0,
                         startDateTime: timestamp,
-                        id: event.id || 0
+                        id: event.id || 0,
+                        input: details.input || '{}'
                     });
                 }
             }
@@ -118,6 +120,8 @@ class StepFuncExecutionView {
                     const startTime = new Date(state.startDateTime).getTime();
                     const endTime = new Date(timestamp).getTime();
                     state.duration = Math.max(0, endTime - startTime);
+                    const details = event.stateExitedEventDetails || {};
+                    state.output = details.output || '';
                 }
             }
         }
@@ -153,13 +157,25 @@ class StepFuncExecutionView {
         // Format JSON for Monaco Editor
         const formattedInput = this._formatJson(this._executionInput);
         const formattedOutput = this._formatJson(this._executionOutput || '(No output)');
-        const stateTableRows = this._stateHistory.map(state => `
-			<tr>
-				<td>${this._escapeHtml(state.name)}</td>
+        const stateTableRows = this._stateHistory.map((state, index) => `
+			<tr class="state-row" data-state-index="${index}">
+				<td>
+					${this._escapeHtml(state.name)}
+					<div class="state-links">
+						${state.input && state.input !== '{}' ? `<a class="state-link" data-type="input" data-state-index="${index}">input</a>` : '<span class="state-link disabled">input</span>'}
+						<span class="link-separator">|</span>
+						${state.output ? `<a class="state-link" data-type="output" data-state-index="${index}">output</a>` : '<span class="state-link disabled">output</span>'}
+					</div>
+				</td>
 				<td>${this._escapeHtml(state.type)}</td>
 				<td>${this._escapeHtml(state.status)}</td>
 				<td>${this._formatDuration(state.duration)}</td>
 				<td>${this._formatDateTime(state.startDateTime)}</td>
+			</tr>
+			<tr class="state-data-row" data-state-index="${index}" style="display: none;">
+				<td colspan="5">
+					<div class="state-data-editor" id="state-editor-${index}" style="height: 300px; border: 1px solid var(--vscode-panel-border); border-radius: 3px;"></div>
+				</td>
 			</tr>
 		`).join('');
         const hasMorePages = !!this._currentPageToken;
@@ -308,6 +324,60 @@ class StepFuncExecutionView {
 						color: var(--vscode-descriptionForeground);
 						font-style: italic;
 					}
+
+					.state-links {
+						display: flex;
+						gap: 5px;
+						align-items: center;
+						margin-top: 5px;
+						font-size: 12px;
+					}
+
+					.state-link {
+						color: var(--vscode-textLink-foreground);
+						cursor: pointer;
+						text-decoration: none;
+					}
+
+					.state-link:hover {
+						text-decoration: underline;
+					}
+
+				.state-link.active {
+					font-weight: bold;
+				}
+
+
+					.state-link.disabled:hover {
+						text-decoration: none;
+					}
+
+					.link-separator {
+						color: var(--vscode-descriptionForeground);
+					}
+
+					.state-data-container {
+						padding: 10px;
+						background: var(--vscode-editor-background);
+						border: 1px solid var(--vscode-panel-border);
+						border-radius: 3px;
+						max-height: 400px;
+						overflow: auto;
+					}
+
+					.state-data-header {
+						font-weight: bold;
+						margin-bottom: 8px;
+						color: var(--vscode-foreground);
+					}
+
+					.state-data-content {
+						font-family: 'Courier New', monospace;
+						font-size: 12px;
+						color: var(--vscode-foreground);
+						white-space: pre-wrap;
+						word-break: break-word;
+					}
 				</style>
 			</head>
 			<body>
@@ -399,7 +469,12 @@ class StepFuncExecutionView {
 					const inputData = ${JSON.stringify(formattedInput)};
 					const outputData = ${JSON.stringify(formattedOutput)};
 					
+					// State history data for expandable rows
+					const stateHistoryData = ${JSON.stringify(this._stateHistory)};
+					
 					let inputEditor, outputEditor;
+					const stateEditors = {}; // Store state editors by index
+					let theme = 'vs'; // Default theme
 
 					// Configure Monaco Editor
 					require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
@@ -408,7 +483,7 @@ class StepFuncExecutionView {
 						// Detect VS Code theme
 						const isDark = document.body.classList.contains('vscode-dark') || 
 									   document.body.classList.contains('vscode-high-contrast');
-						const theme = isDark ? 'vs-dark' : 'vs';
+						theme = isDark ? 'vs-dark' : 'vs';
 
 						// Create Input Editor
 						inputEditor = monaco.editor.create(document.getElementById('inputEditor'), {
@@ -480,6 +555,66 @@ class StepFuncExecutionView {
 
 					document.getElementById('loadMoreBtn')?.addEventListener('click', () => {
 						vscode.postMessage({ command: 'loadMore' });
+					});
+
+					// State input/output links
+					document.querySelectorAll('.state-link:not(.disabled)').forEach(link => {
+						link.addEventListener('click', (e) => {
+							e.preventDefault();
+							const stateIndex = parseInt(link.dataset.stateIndex);
+							const dataType = link.dataset.type; // 'input' or 'output'
+							const state = stateHistoryData[stateIndex];
+							
+							if (!state) return;
+							
+							const dataRow = document.querySelector(\`.state-data-row[data-state-index="\${stateIndex}"]\`);
+							const editorContainer = document.getElementById(\`state-editor-\${stateIndex}\`);
+							
+							if (!editorContainer) return;
+							
+							// Toggle display
+							if (dataRow.style.display === 'none') {
+								const data = dataType === 'input' ? state.input : state.output;
+								
+								// Format JSON if possible
+								let formattedData = data;
+								try {
+									formattedData = JSON.stringify(JSON.parse(data), null, 2);
+								} catch (e) {
+									// If not valid JSON, display as is
+								}
+
+								// Get or create editor for this state
+								let editorKey = \`state-\${stateIndex}\`;
+								if (!stateEditors[editorKey]) {
+									stateEditors[editorKey] = monaco.editor.create(editorContainer, {
+										value: formattedData,
+										language: 'json',
+										theme: theme,
+										readOnly: true,
+										minimap: { enabled: false },
+										scrollBeyondLastLine: false,
+										automaticLayout: true,
+										fontSize: 12,
+										wordWrap: 'on',
+										lineNumbers: 'on',
+										folding: true,
+										renderWhitespace: 'selection',
+										bracketPairColorization: { enabled: true }
+									});
+								} else {
+									// Update content if switching between input/output
+									stateEditors[editorKey].setValue(formattedData);
+									stateEditors[editorKey].layout();
+								}
+								
+								dataRow.style.display = 'table-row';
+								link.classList.add('active');
+							} else {
+								dataRow.style.display = 'none';
+								link.classList.remove('active');
+							}
+						});
 					});
 				</script>
 			</body>
