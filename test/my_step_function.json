@@ -1,11 +1,30 @@
 {
-  "Comment": "A Hello World example of the Amazon States Language using a Pass state",
-  "StartAt": "Hello",
+  "Comment": "A three-state example demonstrating Pass, Task, and Succeed states",
+  "StartAt": "Initialize",
   "States": {
-    "Hello": {
+    "Initialize": {
       "Type": "Pass",
-      "Result": "Hello World",
-      "End": true
+      "Comment": "Initialize the execution with input data",
+      "Result": {
+        "message": "Starting workflow",
+        "timestamp": "2026-01-12T00:00:00Z"
+      },
+      "ResultPath": "$.initialization",
+      "Next": "ProcessData"
+    },
+    "ProcessData": {
+      "Type": "Pass",
+      "Comment": "Process the data",
+      "TimeoutSeconds": 300,
+      "Result": {
+        "message": "Processing complete",
+        "timestamp": "2026-01-12T00:00:00Z"
+      },
+      "Next": "Complete"
+    },
+    "Complete": {
+      "Type": "Succeed",
+      "Comment": "Workflow completed successfully"
     }
   }
 }

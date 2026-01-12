@@ -148,6 +148,9 @@ class StepFuncExecutionView {
         const startTime = this._executionDetails?.startDate ? new Date(this._executionDetails.startDate).toISOString() : 'N/A';
         const stopTime = this._executionDetails?.stopDate ? new Date(this._executionDetails.stopDate).toISOString() : 'N/A';
         const duration = this._calculateDuration();
+        // Format JSON for Monaco Editor
+        const formattedInput = this._formatJson(this._executionInput);
+        const formattedOutput = this._formatJson(this._executionOutput || '(No output)');
         const stateTableRows = this._stateHistory.map(state => `
 			<tr>
 				<td>${this._escapeHtml(state.name)}</td>
@@ -164,8 +167,10 @@ class StepFuncExecutionView {
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this._panel.webview.cspSource} 'unsafe-inline' https://cdn.jsdelivr.net; script-src ${this._panel.webview.cspSource} 'unsafe-inline' https://cdn.jsdelivr.net; font-src ${this._panel.webview.cspSource}; worker-src blob:;">
 				<title>Execution Details</title>
 				<link rel="stylesheet" href="${styleUri}">
+				<link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
 				<style>
 					body {
 						padding: 20px;
@@ -229,6 +234,13 @@ class StepFuncExecutionView {
 						word-break: break-all;
 						font-family: 'Courier New', monospace;
 						font-size: 12px;
+					}
+
+					.editor-container {
+						width: 100%;
+						height: 500px;
+						border: 1px solid var(--vscode-panel-border);
+						margin-bottom: 10px;
 					}
 
 					textarea {
@@ -343,12 +355,12 @@ class StepFuncExecutionView {
 
 					<!-- Input Tab -->
 					<div id="input" class="tab-content">
-						<textarea id="inputTextarea" readonly>${this._escapeHtml(this._executionInput)}</textarea>
+						<div id="inputEditor" class="editor-container"></div>
 					</div>
 
 					<!-- Output Tab -->
 					<div id="output" class="tab-content">
-						<textarea id="outputTextarea" readonly>${this._escapeHtml(this._executionOutput || '(No output)')}</textarea>
+						<div id="outputEditor" class="editor-container"></div>
 					</div>
 				</div>
 
@@ -376,8 +388,59 @@ class StepFuncExecutionView {
 					${this._isLoading ? '<div class="loading">Loading...</div>' : ''}
 				</div>
 
+				<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
 				<script>
 					const vscode = acquireVsCodeApi();
+					
+					// Input and output data
+					const inputData = ${JSON.stringify(formattedInput)};
+					const outputData = ${JSON.stringify(formattedOutput)};
+					
+					let inputEditor, outputEditor;
+
+					// Configure Monaco Editor
+					require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
+					
+					require(['vs/editor/editor.main'], function () {
+						// Detect VS Code theme
+						const isDark = document.body.classList.contains('vscode-dark') || 
+									   document.body.classList.contains('vscode-high-contrast');
+						const theme = isDark ? 'vs-dark' : 'vs';
+
+						// Create Input Editor
+						inputEditor = monaco.editor.create(document.getElementById('inputEditor'), {
+							value: inputData,
+							language: 'json',
+							theme: theme,
+							readOnly: true,
+							minimap: { enabled: false },
+							scrollBeyondLastLine: false,
+							automaticLayout: true,
+							fontSize: 13,
+							wordWrap: 'on',
+							lineNumbers: 'on',
+							folding: true,
+							renderWhitespace: 'selection',
+							bracketPairColorization: { enabled: true }
+						});
+
+						// Create Output Editor
+						outputEditor = monaco.editor.create(document.getElementById('outputEditor'), {
+							value: outputData,
+							language: 'json',
+							theme: theme,
+							readOnly: true,
+							minimap: { enabled: false },
+							scrollBeyondLastLine: false,
+							automaticLayout: true,
+							fontSize: 13,
+							wordWrap: 'on',
+							lineNumbers: 'on',
+							folding: true,
+							renderWhitespace: 'selection',
+							bracketPairColorization: { enabled: true }
+						});
+					});
 
 					// Tab switching
 					document.querySelectorAll('.tab-button').forEach(btn => {
@@ -391,6 +454,15 @@ class StepFuncExecutionView {
 							// Activate selected tab
 							e.target.classList.add('active');
 							document.getElementById(tabName).classList.add('active');
+							
+							// Trigger layout update for Monaco editors when switching tabs
+							setTimeout(() => {
+								if (tabName === 'input' && inputEditor) {
+									inputEditor.layout();
+								} else if (tabName === 'output' && outputEditor) {
+									outputEditor.layout();
+								}
+							}, 0);
 						});
 					});
 
@@ -480,6 +552,18 @@ class StepFuncExecutionView {
             "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    _formatJson(jsonString) {
+        if (!jsonString)
+            return '';
+        try {
+            const parsed = JSON.parse(jsonString);
+            return JSON.stringify(parsed, null, 2);
+        }
+        catch (error) {
+            // If not valid JSON, return as-is
+            return jsonString;
+        }
     }
 }
 exports.StepFuncExecutionView = StepFuncExecutionView;

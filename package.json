@@ -196,7 +196,7 @@
       {
         "command": "StepFuncTreeView.PrintStepFunc",
         "title": "Print StepFunc",
-        "icon": "$(debug-print)"
+        "icon": "$(info)"
       },
       {
         "command": "StepFuncTreeView.TestAwsConnection",
