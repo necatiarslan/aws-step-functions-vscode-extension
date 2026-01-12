@@ -86,7 +86,8 @@ class StepFuncExecutionView {
     }
     _parseStateHistory(events, append = false) {
         const stateMap = new Map();
-        for (const event of events) {
+        const sortedEvents = events.sort((a, b) => (a.id || 0) - (b.id || 0));
+        for (const event of sortedEvents) {
             const type = event.type;
             const timestamp = event.timestamp ? new Date(event.timestamp).toISOString() : '';
             if (type === 'TaskStateEntered' || type === 'PassStateEntered' || type === 'ChoiceStateEntered' ||
@@ -102,6 +103,7 @@ class StepFuncExecutionView {
                         status: 'Running',
                         duration: 0,
                         startDateTime: timestamp,
+                        id: event.id || 0
                     });
                 }
             }
@@ -120,7 +122,7 @@ class StepFuncExecutionView {
             }
         }
         // Convert map to array and add to state history
-        const newStates = Array.from(stateMap.values()).reverse();
+        const newStates = Array.from(stateMap.values()).sort((a, b) => (a.id || 0) - (b.id || 0));
         if (append) {
             this._stateHistory = [...this._stateHistory, ...newStates];
         }
@@ -145,8 +147,8 @@ class StepFuncExecutionView {
         const executionStatus = this._executionDetails?.status || 'Unknown';
         const executionType = this._executionDetails?.stateMachineArn ? 'Standard' : 'Express';
         const roleArn = this._executionDetails?.roleArn || 'N/A';
-        const startTime = this._executionDetails?.startDate ? new Date(this._executionDetails.startDate).toISOString() : 'N/A';
-        const stopTime = this._executionDetails?.stopDate ? new Date(this._executionDetails.stopDate).toISOString() : 'N/A';
+        const startTime = this._executionDetails?.startDate ? this._formatDateTime(this._executionDetails.startDate) : 'N/A';
+        const stopTime = this._executionDetails?.stopDate ? this._formatDateTime(this._executionDetails.stopDate) : 'N/A';
         const duration = this._calculateDuration();
         // Format JSON for Monaco Editor
         const formattedInput = this._formatJson(this._executionInput);
@@ -156,8 +158,8 @@ class StepFuncExecutionView {
 				<td>${this._escapeHtml(state.name)}</td>
 				<td>${this._escapeHtml(state.type)}</td>
 				<td>${this._escapeHtml(state.status)}</td>
-				<td>${state.duration}ms</td>
-				<td>${state.startDateTime}</td>
+				<td>${this._formatDuration(state.duration)}</td>
+				<td>${this._formatDateTime(state.startDateTime)}</td>
 			</tr>
 		`).join('');
         const hasMorePages = !!this._currentPageToken;
@@ -347,7 +349,7 @@ class StepFuncExecutionView {
 							</div>
 							<div class="detail-item">
 								<span class="detail-label">Duration</span>
-								<span class="detail-value">${duration}ms</span>
+								<span class="detail-value">${this._formatDuration(parseInt(duration))}</span>
 							</div>
 						</div>
 						<button id="viewLogsBtn">View Execution Logs</button>
@@ -540,6 +542,48 @@ class StepFuncExecutionView {
             ? new Date(this._executionDetails.stopDate).getTime()
             : new Date().getTime();
         return (endTime - startTime).toString();
+    }
+    _formatDuration(milliseconds) {
+        if (!milliseconds || milliseconds === 0)
+            return '0ms';
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const parts = [];
+        if (days > 0) {
+            parts.push(`${days}d`);
+        }
+        if (hours % 24 > 0) {
+            parts.push(`${hours % 24}h`);
+        }
+        if (minutes % 60 > 0) {
+            parts.push(`${minutes % 60}m`);
+        }
+        if (seconds % 60 > 0) {
+            parts.push(`${seconds % 60}s`);
+        }
+        if (parts.length === 0 && milliseconds < 1000) {
+            parts.push(`${milliseconds}ms`);
+        }
+        return parts.join(' ');
+    }
+    _formatDateTime(dateInput) {
+        if (!dateInput)
+            return 'N/A';
+        const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+        if (isNaN(date.getTime()))
+            return 'Invalid Date';
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+        return date.toLocaleString('en-US', options);
     }
     _escapeHtml(text) {
         if (!text)
