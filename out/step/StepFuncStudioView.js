@@ -365,9 +365,20 @@ class StepFuncStudioView {
     /**
      * Main entry point to render the Workflow Studio
      */
-    static async Render(extensionUri, stepFuncName, aslDefinition) {
+    static async Render(extensionUri, stepFuncName, codePath) {
         ui.logToOutput('StepFuncStudioView.Render Started');
         try {
+            // Read ASL definition from file
+            const aslDefinitionRaw = await vscode.workspace.fs.readFile(vscode.Uri.file(codePath));
+            const aslDefinitionStr = Buffer.from(aslDefinitionRaw).toString('utf-8');
+            let aslDefinition;
+            try {
+                aslDefinition = JSON.parse(aslDefinitionStr);
+            }
+            catch (e) {
+                ui.logToOutput('Failed to parse ASL definition from file', e);
+                aslDefinition = {};
+            }
             // Convert definition to JSON string
             const aslJson = typeof aslDefinition === 'string' ? aslDefinition : JSON.stringify(aslDefinition, null, 2);
             // Create a temporary file URI - use base64 to encode the definition

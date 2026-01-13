@@ -440,11 +440,21 @@ export class StepFuncStudioView {
     public static async Render(
         extensionUri: vscode.Uri,
         stepFuncName: string,
-        aslDefinition: any
+        codePath: string
     ) {
         ui.logToOutput('StepFuncStudioView.Render Started');
 
         try {
+            // Read ASL definition from file
+            const aslDefinitionRaw = await vscode.workspace.fs.readFile(vscode.Uri.file(codePath));
+            const aslDefinitionStr = Buffer.from(aslDefinitionRaw).toString('utf-8');
+            let aslDefinition: any;
+            try {
+                aslDefinition = JSON.parse(aslDefinitionStr);
+            } catch (e: any) {
+                ui.logToOutput('Failed to parse ASL definition from file', e);
+                aslDefinition = {};
+            }
             // Convert definition to JSON string
             const aslJson = typeof aslDefinition === 'string' ? aslDefinition : JSON.stringify(aslDefinition, null, 2);
             
