@@ -2,7 +2,7 @@
   "name": "aws-step-functions-vscode-extension",
   "displayName": "Aws Step Functions",
   "description": "Update, Trigger & Monitor your Aws Step Functions",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "NecatiARSLAN",
   "repository": {
     "type": "git",

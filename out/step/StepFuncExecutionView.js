@@ -94,6 +94,7 @@ class StepFuncExecutionView {
     }
     _parseStateHistory(events) {
         const stateMap = new Map();
+        const stateNameByResource = new Map(); // Map resource ARNs/names to state names
         const sortedEvents = events.sort((a, b) => (a.id || 0) - (b.id || 0));
         for (const event of sortedEvents) {
             const type = event.type;
@@ -130,6 +131,73 @@ class StepFuncExecutionView {
                     state.duration = Math.max(0, endTime - startTime);
                     const details = event.stateExitedEventDetails || {};
                     state.output = details.output || '';
+                }
+            }
+            else if (type === 'TaskFailed') {
+                const details = event.taskFailedEventDetails || {};
+                const resource = details.resource || '';
+                // Try to find the state by resource or use previous task state
+                // Look for the most recently entered task state
+                let matchedStateName;
+                for (const [name, state] of stateMap) {
+                    if (state.status === 'Running' && (state.type === 'Task' || state.type === 'Task')) {
+                        matchedStateName = name;
+                        break;
+                    }
+                }
+                if (matchedStateName && stateMap.has(matchedStateName)) {
+                    const state = stateMap.get(matchedStateName);
+                    state.status = 'Failed';
+                    const startTime = new Date(state.startDateTime).getTime();
+                    const endTime = new Date(timestamp).getTime();
+                    state.duration = Math.max(0, endTime - startTime);
+                }
+            }
+            else if (type === 'ActivityFailed') {
+                const details = event.activityFailedEventDetails || {};
+                // Find the most recently entered task state
+                let matchedStateName;
+                for (const [name, state] of stateMap) {
+                    if (state.status === 'Running' && state.type === 'Task') {
+                        matchedStateName = name;
+                        break;
+                    }
+                }
+                if (matchedStateName && stateMap.has(matchedStateName)) {
+                    const state = stateMap.get(matchedStateName);
+                    state.status = 'Failed';
+                    const startTime = new Date(state.startDateTime).getTime();
+                    const endTime = new Date(timestamp).getTime();
+                    state.duration = Math.max(0, endTime - startTime);
+                }
+            }
+            else if (type === 'LambdaFunctionFailed') {
+                const details = event.lambdaFunctionFailedEventDetails || {};
+                // Find the most recently entered task state
+                let matchedStateName;
+                for (const [name, state] of stateMap) {
+                    if (state.status === 'Running' && state.type === 'Task') {
+                        matchedStateName = name;
+                        break;
+                    }
+                }
+                if (matchedStateName && stateMap.has(matchedStateName)) {
+                    const state = stateMap.get(matchedStateName);
+                    state.status = 'Failed';
+                    const startTime = new Date(state.startDateTime).getTime();
+                    const endTime = new Date(timestamp).getTime();
+                    state.duration = Math.max(0, endTime - startTime);
+                }
+            }
+            else if (type === 'MapStateFailed' || type === 'ParallelStateFailed') {
+                const details = event.stateFailedEventDetails || {};
+                const stateName = details.name || 'Unknown';
+                if (stateMap.has(stateName)) {
+                    const state = stateMap.get(stateName);
+                    state.status = 'Failed';
+                    const startTime = new Date(state.startDateTime).getTime();
+                    const endTime = new Date(timestamp).getTime();
+                    state.duration = Math.max(0, endTime - startTime);
                 }
             }
         }

@@ -38,6 +38,7 @@ https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 
 ## Todo  
 - Add workflow studio to execution view
+- Failed state do not show in execution view
 
 ## Nice To Have
 - 

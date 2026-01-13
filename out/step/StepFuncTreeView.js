@@ -317,6 +317,7 @@ class StepFuncTreeView {
         else {
             let config = await vscode.window.showInputBox({ placeHolder: 'Enter Payload Json or leave empty' });
             if (config === undefined) {
+                this.SetNodeRunning(node, false);
                 return;
             }
             if (config && !api.isJsonString(config)) {

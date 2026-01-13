@@ -5,7 +5,6 @@ import { StepFuncTreeDataProvider } from './StepFuncTreeDataProvider';
 import * as ui from '../common/UI';
 import * as api from '../common/API';
 import { CloudWatchLogView } from '../cloudwatch/CloudWatchLogView';
-import { StepFuncGraphView } from './StepFuncGraphView';
 import { StepFuncStudioView } from './StepFuncStudioView';
 import { StepFuncExecutionView } from './StepFuncExecutionView';
 
@@ -348,7 +347,7 @@ export class StepFuncTreeView {
 		else
 		{
 			let config = await vscode.window.showInputBox({ placeHolder: 'Enter Payload Json or leave empty' });
-			if(config===undefined){ return; }
+			if(config===undefined){ this.SetNodeRunning(node, false); return; }
 			if(config && !api.isJsonString(config)){
 				ui.showInfoMessage('Config should be a valid JSON');
 				this.SetNodeRunning(node, false);
