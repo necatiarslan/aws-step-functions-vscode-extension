@@ -17,7 +17,19 @@
   ],
   "keywords": [
     "AWS",
-    "Step Functions"
+    "Step Functions",
+    "AWS Step Functions",
+    "Serverless",
+    "AWS Step Functions Studio",
+    "AWS Step Functions Visual Studio Code",
+    "AWS Step Functions VSCode",
+    "AWS Step Functions Extension",
+    "AWS Step Functions Plugin",
+    "AWS Step Functions Monitor",
+    "AWS Step Functions Trigger",
+    "AWS Step Functions Update",
+    "AWS Step Functions Debug",
+    "AWS Step Functions Development"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -191,7 +203,7 @@
       {
         "command": "StepFuncTreeView.ViewCodeGraph",
         "title": "View Graph",
-        "icon": "$(graph)"
+        "icon": "$(layout)"
       },
       {
         "command": "StepFuncTreeView.PrintStepFunc",

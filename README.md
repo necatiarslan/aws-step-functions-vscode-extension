@@ -37,8 +37,7 @@ https://github.com/necatiarslan/aws-step-functions-vscode-extension/issues/new
 
 
 ## Todo  
-- fix graph view
-  - https://github.com/aws/aws-toolkit-vscode/tree/master/packages/core/src/stepFunctions/workflowStudio
+- Add workflow studio to execution view
 
 ## Nice To Have
 - 
