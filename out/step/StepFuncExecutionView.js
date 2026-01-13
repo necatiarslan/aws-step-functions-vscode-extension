@@ -29,8 +29,14 @@ class StepFuncExecutionView {
         this._stepFuncArn = stepFuncArn;
         this._region = region;
     }
+    _getExecutionName() {
+        // Extract execution name from ARN: arn:aws:states:region:account-id:execution:state-machine-name:execution-name
+        const parts = this._executionArn.split(':');
+        return parts.length > 0 ? parts[parts.length - 1] : 'Unknown';
+    }
     async Initialize() {
-        this._panel = vscode.window.createWebviewPanel('stepFuncExecutionView', 'Execution Details', vscode.ViewColumn.One, {
+        const executionName = this._getExecutionName();
+        this._panel = vscode.window.createWebviewPanel('stepFuncExecutionView', `Execution ${executionName}`, vscode.ViewColumn.One, {
             enableScripts: true,
             localResourceRoots: [
                 vscode.Uri.joinPath(this._extensionUri, 'media'),
@@ -257,7 +263,7 @@ class StepFuncExecutionView {
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this._panel.webview.cspSource} 'unsafe-inline' https://cdn.jsdelivr.net; script-src ${this._panel.webview.cspSource} 'unsafe-inline' https://cdn.jsdelivr.net; font-src ${this._panel.webview.cspSource}; worker-src blob:;">
-				<title>Execution Details</title>
+				<title>Execution ${this._escapeHtml(this._getExecutionName())}</title>
 				<link rel="stylesheet" href="${styleUri}">
 				<link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
 				<style>
@@ -458,7 +464,7 @@ class StepFuncExecutionView {
 			</head>
 			<body>
 				<div class="header-section">
-					<h2>Execution Details</h2>
+					<h2>Execution ${this._escapeHtml(this._getExecutionName())}</h2>
 
 					<div class="tabs">
 						<button class="tab-button active" data-tab="status">Status</button>
