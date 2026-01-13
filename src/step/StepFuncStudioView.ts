@@ -17,7 +17,19 @@ enum WorkflowMode {
 
 interface Message {
     command: string;
+    messageType?: string;
     [key: string]: any;
+}
+
+enum MessageType {
+    REQUEST = 'REQUEST',
+    BROADCAST = 'BROADCAST',
+    RESPONSE = 'RESPONSE',
+}
+
+enum Command {
+    INIT = 'INIT',
+    FILE_CHANGED = 'FILE_CHANGED',
 }
 
 /**
@@ -181,81 +193,31 @@ export class StepFuncStudioEditorProvider implements vscode.CustomTextEditorProv
     }
 
     /**
-     * Injects initialization script into HTML
+     * Injects initialization metadata into HTML
      */
     private _injectInitScript(html: string): string {
         // Add base tag for CDN resources
-        const baseTag = `<base href='https://d5t62uwepi9lu.cloudfront.net/'/>`;
+        const cdn = 'https://d5t62uwepi9lu.cloudfront.net';
+        const baseTag = `<base href='${cdn}/'/>`;
         let result = html;
+        
+        // Inject base tag for CDN resources
         if (result.includes('<head>')) {
             result = result.replace('<head>', `<head>\n    ${baseTag}`);
         }
 
-        // Inject initialization script
+        // Inject simple initialization script that listens for messages
         const initScript = `
 <script>
     (function() {
-        console.log('Workflow Studio initializing...');
+        const vscode = acquireVsCodeApi();
+        console.log('Workflow Studio: Initialization script loaded');
         
-        // Listen for messages from extension
-        window.addEventListener('message', function(event) {
-            const message = event.data;
-            console.log('Received message from extension:', message.command);
-            
-            if (message.command === 'setDefinition') {
-                try {
-                    const definition = typeof message.definition === 'string' 
-                        ? JSON.parse(message.definition) 
-                        : message.definition;
-                    
-                    console.log('Setting definition:', definition);
-                    
-                    // Dispatch event to Workflow Studio to load the definition
-                    window.dispatchEvent(new CustomEvent('asl-definition-ready', {
-                        detail: {
-                            definition: definition,
-                            stateMachineName: message.stateMachineName
-                        }
-                    }));
-                    
-                    // Try to set via postMessage to iFrame if it exists
-                    const iframes = document.querySelectorAll('iframe');
-                    iframes.forEach(iframe => {
-                        try {
-                            iframe.contentWindow?.postMessage({
-                                command: 'setDefinition',
-                                definition: definition,
-                                stateMachineName: message.stateMachineName
-                            }, '*');
-                        } catch (e) {
-                            console.log('Could not post to iframe:', e);
-                        }
-                    });
-                } catch (e) {
-                    console.error('Error setting definition:', e);
-                }
-            }
+        // Send init message to indicate webview is ready
+        vscode.postMessage({ 
+            command: 'INIT',
+            messageType: 'REQUEST'
         });
-        
-        // Send init message when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, sending init message');
-            try {
-                acquireVsCodeApi().postMessage({ command: 'init' });
-            } catch (e) {
-                console.error('Error sending init:', e);
-            }
-        });
-        
-        // Also send init after a delay
-        setTimeout(function() {
-            console.log('Sending delayed init message');
-            try {
-                acquireVsCodeApi().postMessage({ command: 'init' });
-            } catch (e) {
-                console.error('Error sending delayed init:', e);
-            }
-        }, 1000);
     })();
 </script>
         `;
@@ -349,8 +311,6 @@ export class StepFuncStudioView {
         ui.logToOutput('StepFuncStudioView.refreshPanel Started');
         try {
             this._panel.webview.html = await this.provider.getWebviewContent();
-            // Send definition after a short delay to ensure webview is ready
-            setTimeout(() => this._sendAslDefinition(), 500);
         } catch (error: any) {
             ui.logToOutput('Error refreshing panel', error);
             this._panel.webview.html = this._getFallbackHtml(error);
@@ -364,28 +324,50 @@ export class StepFuncStudioView {
     private _handleMessage(message: Message) {
         ui.logToOutput(`Received message from webview: ${message.command}`);
         
-        if (message.command === 'init') {
-            // Webview is ready, send the ASL definition
-            this._sendAslDefinition();
+        if (message.command === Command.INIT) {
+            // Webview is ready, broadcast the file contents (ASL definition)
+            ui.logToOutput('Webview sent init, broadcasting file contents');
+            this._broadcastFileChange();
         }
     }
 
     /**
-     * Sends the ASL definition to the webview
+     * Broadcasts file content (ASL definition) to the webview
+     * Follows AWS Workflow Studio message protocol
      */
-    private _sendAslDefinition() {
-        ui.logToOutput('Sending ASL definition to webview');
+    private _broadcastFileChange() {
+        ui.logToOutput('Broadcasting file contents to webview');
         
-        // Convert ASL definition to string if it's an object
-        const aslString = typeof this.aslDefinition === 'string' 
-            ? this.aslDefinition 
-            : JSON.stringify(this.aslDefinition);
-
+        // Get file contents as string
+        const fileContents = this._getFileContents();
+        
+        // Send broadcast message with file contents
         this._panel.webview.postMessage({
-            command: 'setDefinition',
-            definition: aslString,
-            stateMachineName: this.stepFuncName,
+            messageType: MessageType.BROADCAST,
+            command: Command.FILE_CHANGED,
+            fileContents: fileContents,
+            fileName: this.stepFuncName,
+            filePath: this._document.uri.fsPath,
+            trigger: 'INITIAL_RENDER',
         });
+        
+        ui.logToOutput(`Broadcasted file with ${fileContents.length} characters`);
+    }
+
+    /**
+     * Get file contents as string (ASL definition)
+     */
+    private _getFileContents(): string {
+        if (this._document.getText().trim()) {
+            // Use document text if available
+            return this._document.getText();
+        } else if (typeof this.aslDefinition === 'string') {
+            // Use ASL definition if it's already a string
+            return this.aslDefinition;
+        } else {
+            // Convert ASL definition object to string
+            return JSON.stringify(this.aslDefinition, null, 2);
+        }
     }
 
     /**
@@ -445,42 +427,8 @@ export class StepFuncStudioView {
         ui.logToOutput('StepFuncStudioView.Render Started');
 
         try {
-            // Read ASL definition from file
-            const aslDefinitionRaw = await vscode.workspace.fs.readFile(vscode.Uri.file(codePath));
-            const aslDefinitionStr = Buffer.from(aslDefinitionRaw).toString('utf-8');
-            let aslDefinition: any;
-            try {
-                aslDefinition = JSON.parse(aslDefinitionStr);
-            } catch (e: any) {
-                ui.logToOutput('Failed to parse ASL definition from file', e);
-                aslDefinition = {};
-            }
-            // Convert definition to JSON string
-            const aslJson = typeof aslDefinition === 'string' ? aslDefinition : JSON.stringify(aslDefinition, null, 2);
-            
-            // Create a temporary file URI - use base64 to encode the definition
-            const definitionB64 = Buffer.from(aslJson).toString('base64');
-            const query = `statemachineName=${encodeURIComponent(stepFuncName)}&workflowMode=${encodeURIComponent(WorkflowMode.Editable)}&definition=${definitionB64}`;
-            
-            // Create an untitled document with the definition as content
-            const uri = vscode.Uri.parse(`untitled:${stepFuncName}.asl.json?${query}`);
-            
-            // Create text document directly with the content
-            const doc = await vscode.workspace.openTextDocument(uri);
-            
-            // Write the ASL definition to the document
-            const editor = await vscode.window.showTextDocument(doc, vscode.ViewColumn.One, false);
-            
-            // Get the full content range
-            const fullRange = new vscode.Range(
-                new vscode.Position(0, 0),
-                new vscode.Position(doc.lineCount, 0)
-            );
-            
-            // Apply edit to add content
-            const edit = new vscode.WorkspaceEdit();
-            edit.set(uri, [vscode.TextEdit.replace(fullRange, aslJson)]);
-            await vscode.workspace.applyEdit(edit);
+            // Create URI with query parameters
+            const uri = vscode.Uri.file(codePath);
             
             // Now open with the custom editor
             await StepFuncStudioEditorProvider.openWithWorkflowStudio(uri, {
