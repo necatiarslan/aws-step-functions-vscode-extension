@@ -662,7 +662,6 @@ export async function ZipTextFile(inputPath: string, outputZipPath?: string): Pr
   }
 }
 
-import { GetUserCommand, GetUserCommandOutput } from "@aws-sdk/client-iam";
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
 
 async function GetSTSClient(region: string) {
