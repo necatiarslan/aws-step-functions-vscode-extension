@@ -28,7 +28,7 @@ npm-install:
     npm install
     npx tsc --noEmit
 
-lists:
+list:
     aws --endpoint-url=http://localhost:4566 stepfunctions list-state-machines
 
 create:
